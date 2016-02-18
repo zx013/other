@@ -1,0 +1,19 @@
+# File name: drawing.kv (Images and colors)
+#:kivy 1.7.0
+
+<DrawingSpace>:
+	pos_hint: self.base_pos
+	size_hint: (self.base_pos['right'] - 1) * 2, .2
+	rows: 1
+	Label:
+		canvas.before:
+			Rectangle:
+				pos: self.pos
+				size: self.size
+				source: root.source_1
+	Label:
+		canvas.before:
+			Rectangle:
+				pos: self.pos
+				size: self.size
+				source: root.source_2
