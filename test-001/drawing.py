@@ -21,7 +21,7 @@ class DrawingSpace(GridLayout):
 		super(DrawingSpace, self).__init__(**kwargs)
 		self.source_1 = self.file_list.next()
 		self.source_2 = self.file_list.next()
-		Clock.schedule_interval(self.move, 5)
+		Clock.schedule_interval(self.move, 3)
 	
 	def on_touch_down(self, touch):
 		self.move()
