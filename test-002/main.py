@@ -5,31 +5,7 @@ kivy.require('1.9.0')
 
 from kivy.app import App
 from kivy.uix.label import Label
-
-
-import jnius_config
-jnius_config.add_classpath('.', 'paydemoactivity.jar')
-from jnius import autoclass
-
-def test():
-	Stack = autoclass('java.util.Stack')
-	stack = Stack()
-	stack.push('hello')
-	stack.push('world')
-	stack.pop()
-
-def pay(*args):
-	PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.PayDemoActivity')
-	s = str(PayDemoActivity) + '\n'
-	try:
-		demo = PayDemoActivity()
-	except Exception, ex:
-		s += str(ex) + '\n'
-	try:
-		demo.pay()
-	except Exception, ex:
-		s += str(ex) + '\n'
-	return s
+from pay import test, pay, toast
 
 
 class mainApp(App):
@@ -37,7 +13,7 @@ class mainApp(App):
 		test()
 		s = pay()
 		label = Label(text=s)
-		
+		toast('abc')
 		return label
 
 if __name__ == '__main__':
