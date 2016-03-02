@@ -5,7 +5,8 @@ kivy.require('1.9.0')
 
 from kivy.app import App
 from kivy.uix.label import Label
-from pay import test, pay, toast
+from pay import test, pay
+from toast import toast
 
 
 class mainApp(App):
