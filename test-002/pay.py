@@ -21,6 +21,8 @@ def test():
 	stack.pop()
 
 def h5pay():
+	#AndroidManifest.xml
+	#<activity android:name="H5PayDemoActivity" />
 	current = cast('android.app.Activity', PythonActivity.mActivity)
 	H5PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.H5PayDemoActivity')
 	s = ''
@@ -33,6 +35,8 @@ def h5pay():
 		current.startActivity(intent)
 	except Exception, ex:
 		s += str(ex) + '\n'
+	l = len(s) / 2
+	s = s[:l] + '\n' + s[l:]
 	return s
 
 def pay():
