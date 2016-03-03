@@ -1,8 +1,11 @@
 #-*- coding:utf-8 -*-
 import jnius_config
 jnius_config.add_classpath('.', 'paydemoactivity.jar')
-from jnius import autoclass
-context = autoclass('org.renpy.android.PythonActivity').mActivity  
+from jnius import autoclass, cast
+
+PythonActivity = autoclass('org.renpy.android.PythonActivity')
+Intent = autoclass('android.content.Intent')
+Uri = autoclass('android.net.Uri')
 
 
 def test():
@@ -18,17 +21,18 @@ def pay():
 
 	s = str(PayDemoActivity) + '\n'
 	try:
-		demo = PayDemoActivity(context)
+		intent = Intent()
+		#intent.setClass(PythonActivity.mActivity, FragmentActivity)
+		intent.setAction(Intent.ACTION_VIEW)
+		intent.setData(Uri.parse('http://kivy.org'))
 	except Exception, ex:
 		s += str(ex) + '\n'
 
 	try:
-		fa = FragmentActivity(context)
+		#demo = PayDemoActivity()
+		currentActivity = cast('android.app.Activity', PythonActivity.mActivity)
+		currentActivity.startActivity(intent)
 	except Exception, ex:
 		s += str(ex) + '\n'
 
-	try:
-		demo.pay()
-	except Exception, ex:
-		s += str(ex) + '\n'
 	return s
