@@ -2,10 +2,15 @@
 import jnius_config
 jnius_config.add_classpath('.', 'paydemoactivity.jar')
 from jnius import autoclass, cast
+from toast import toast
 
+PayTask = autoclass('com.alipay.sdk.app.PayTask')
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
 Intent = autoclass('android.content.Intent')
 Uri = autoclass('android.net.Uri')
+Class = autoclass('java.lang.Class')
+Bundle = autoclass('android.os.Bundle')
+String = autoclass('java.lang.String')
 
 
 def test():
@@ -15,6 +20,21 @@ def test():
 	stack.push('world')
 	stack.pop()
 
+def h5pay():
+	current = cast('android.app.Activity', PythonActivity.mActivity)
+	H5PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.H5PayDemoActivity')
+	s = ''
+	try:
+		intent = Intent(current, Class.forName('com.alipay.sdk.pay.demo.H5PayDemoActivity'))
+		extras = Bundle()
+		url = String("http://m.taobao.com")
+		extras.putString("url", url)
+		intent.putExtras(extras)
+		current.startActivity(intent)
+	except Exception, ex:
+		s += str(ex) + '\n'
+	return s
+
 def pay():
 	PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.PayDemoActivity')
 	FragmentActivity = autoclass('android.support.v4.app.FragmentActivity')
@@ -22,9 +42,10 @@ def pay():
 	s = str(PayDemoActivity) + '\n'
 	try:
 		intent = Intent()
-		#intent.setClass(PythonActivity.mActivity, FragmentActivity)
 		intent.setAction(Intent.ACTION_VIEW)
 		intent.setData(Uri.parse('http://kivy.org'))
+		#cls = Class.forName('com.alipay.sdk.pay.demo.PayDemoActivity')
+		#intent.setClass(PythonActivity.mActivity, cls)
 	except Exception, ex:
 		s += str(ex) + '\n'
 
@@ -35,4 +56,10 @@ def pay():
 	except Exception, ex:
 		s += str(ex) + '\n'
 
+	return s
+
+def pay_test():
+	test()
+	s = h5pay()
+	toast('abc')
 	return s
