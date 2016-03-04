@@ -4,7 +4,6 @@ jnius_config.add_classpath('.', 'paydemoactivity.jar')
 from jnius import autoclass, cast
 from toast import toast
 
-PayTask = autoclass('com.alipay.sdk.app.PayTask')
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
 Intent = autoclass('android.content.Intent')
 Uri = autoclass('android.net.Uri')
@@ -12,6 +11,7 @@ Class = autoclass('java.lang.Class')
 Bundle = autoclass('android.os.Bundle')
 String = autoclass('java.lang.String')
 
+current = cast('android.app.Activity', PythonActivity.mActivity)
 
 def test():
 	Stack = autoclass('java.util.Stack')
@@ -20,11 +20,11 @@ def test():
 	stack.push('world')
 	stack.pop()
 
-def h5pay():
-	#AndroidManifest.xml
-	#<activity android:name="com.alipay.sdk.pay.demo.H5PayDemoActivity" />
-	#.buildozer/android/platform/python-for-android/dist/myapp/templates/AndroidManifest.tmpl.xml
-	current = cast('android.app.Activity', PythonActivity.mActivity)
+#AndroidManifest.xml
+#<activity android:name="com.alipay.sdk.pay.demo.H5PayDemoActivity" />
+#modify: .buildozer/android/platform/python-for-android/dist/myapp/templates/AndroidManifest.tmpl.xml
+#delete: setContentView(R.layout.pay_main);
+def h5pay():	
 	H5PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.H5PayDemoActivity')
 	s = ''
 	try:
@@ -40,24 +40,17 @@ def h5pay():
 	s = s[:l] + '\n' + s[l:]
 	return s
 
+
 def pay():
 	PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.PayDemoActivity')
-	FragmentActivity = autoclass('android.support.v4.app.FragmentActivity')
 
 	s = str(PayDemoActivity) + '\n'
 	try:
-		intent = Intent()
-		intent.setAction(Intent.ACTION_VIEW)
-		intent.setData(Uri.parse('http://kivy.org'))
-		#cls = Class.forName('com.alipay.sdk.pay.demo.PayDemoActivity')
-		#intent.setClass(PythonActivity.mActivity, cls)
-	except Exception, ex:
-		s += str(ex) + '\n'
-
-	try:
-		#demo = PayDemoActivity()
-		currentActivity = cast('android.app.Activity', PythonActivity.mActivity)
-		currentActivity.startActivity(intent)
+		intent = Intent(current, Class.forName('com.alipay.sdk.pay.demo.PayDemoActivity'))
+		#intent.setAction(Intent.ACTION_VIEW)
+		#intent.setData(Uri.parse('http://kivy.org'))
+		current.startActivity(intent)
+		#current.h5pay()
 	except Exception, ex:
 		s += str(ex) + '\n'
 
@@ -65,6 +58,6 @@ def pay():
 
 def pay_test():
 	test()
-	s = h5pay()
+	s = pay()
 	toast('abc')
 	return s
