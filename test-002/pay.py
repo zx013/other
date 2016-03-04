@@ -11,6 +11,7 @@ Class = autoclass('java.lang.Class')
 Bundle = autoclass('android.os.Bundle')
 String = autoclass('java.lang.String')
 
+
 current = cast('android.app.Activity', PythonActivity.mActivity)
 
 def test():
@@ -56,8 +57,14 @@ def pay():
 		s += str(ex) + '\n'
 	return s
 
+def popup():
+	from kivy.uix.popup import Popup
+	p = Popup(title='Test popup', size_hint=(None, None), size=(256, 256))
+	p.open()
+
 def pay_test():
 	test()
 	s = pay()
+	popup()
 	toast('abc')
 	return s
