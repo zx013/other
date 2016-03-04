@@ -22,7 +22,8 @@ def test():
 
 def h5pay():
 	#AndroidManifest.xml
-	#<activity android:name="H5PayDemoActivity" />
+	#<activity android:name="com.alipay.sdk.pay.demo.H5PayDemoActivity" />
+	#.buildozer/android/platform/python-for-android/dist/myapp/templates/AndroidManifest.tmpl.xml
 	current = cast('android.app.Activity', PythonActivity.mActivity)
 	H5PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.H5PayDemoActivity')
 	s = ''
