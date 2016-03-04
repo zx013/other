@@ -34,7 +34,7 @@ def h5pay():
 		url = String("http://m.taobao.com")
 		extras.putString("url", url)
 		intent.putExtras(extras)
-		current.startActivity(intent)
+		current.startActivityForResult(intent, 0)
 	except Exception, ex:
 		s += str(ex) + '\n'
 	l = len(s) / 2
@@ -50,11 +50,10 @@ def pay():
 		intent = Intent(current, Class.forName('com.alipay.sdk.pay.demo.PayDemoActivity'))
 		#intent.setAction(Intent.ACTION_VIEW)
 		#intent.setData(Uri.parse('http://kivy.org'))
-		current.startActivity(intent)
+		current.startActivityForResult(intent, 0)
 		#current.h5pay()
 	except Exception, ex:
 		s += str(ex) + '\n'
-
 	return s
 
 def pay_test():
