@@ -21,6 +21,7 @@ def test():
 	stack.pop()
 
 #AndroidManifest.xml
+#<uses-permission android:name="android.permission.INTERNET" />
 #<activity android:name="com.alipay.sdk.pay.demo.H5PayDemoActivity" />
 #modify: .buildozer/android/platform/python-for-android/dist/myapp/templates/AndroidManifest.tmpl.xml
 #delete: setContentView(R.layout.pay_main);
