@@ -4,7 +4,7 @@ jnius_config.add_classpath('.', 'alipaySdk-20160120.jar', 'paydemoactivity.jar')
 from jnius import autoclass, cast
 from toast import toast
 
-
+'''
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
 Intent = autoclass('android.content.Intent')
 Uri = autoclass('android.net.Uri')
@@ -12,8 +12,8 @@ Class = autoclass('java.lang.Class')
 Bundle = autoclass('android.os.Bundle')
 String = autoclass('java.lang.String')
 
-
 current = cast('android.app.Activity', PythonActivity.mActivity)
+'''
 
 def test():
 	Stack = autoclass('java.util.Stack')
@@ -27,6 +27,7 @@ def test():
 #<activity android:name='com.alipay.sdk.pay.demo.H5PayDemoActivity' />
 #modify: .buildozer/android/platform/python-for-android/dist/myapp/templates/AndroidManifest.tmpl.xml
 #delete: setContentView(R.layout.pay_main);
+'''
 def h5paydemo():
 	H5PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.H5PayDemoActivity')
 	s = ''
@@ -62,6 +63,7 @@ def popup():
 	from kivy.uix.popup import Popup
 	p = Popup(title='Test popup', size_hint=(None, None), size=(256, 256))
 	p.open()
+'''
 
 
 import time
@@ -72,8 +74,11 @@ import thread
 String = autoclass('java.lang.String')
 #URLEncoder = autoclass('java.net.URLEncoder')
 
-PythonActivity = autoclass('org.renpy.android.PythonActivity')
+PayTask = autoclass('com.alipay.sdk.app.PayTask')
+SignUtils = autoclass('com.alipay.sdk.pay.demo.SignUtils')
 
+
+PythonActivity = autoclass('org.renpy.android.PythonActivity')
 context = cast('android.app.Activity', PythonActivity.mActivity)
 
 
@@ -84,11 +89,8 @@ class Pay:
 	RSA_PUBLIC = ''
 
 	def run(self, payInfo):
-		PayTask = autoclass('com.alipay.sdk.app.PayTask')
-		thread.exit_thread()
-		alipay = PayTask(context)
-		
-		result = alipay.pay(payInfo, True)
+		#alipay = PayTask(context)
+		#result = alipay.pay(payInfo, True)
 		thread.exit_thread()
 
 	def pay(self):
@@ -110,6 +112,9 @@ class Pay:
 		payInfo = '%s&sign="%s"&%s' % (orderInfo, sign, self.getSignType())
 
 		thread.start_new_thread(self.run, (payInfo,))
+		alipay = PayTask(context)
+		result = alipay.pay(payInfo, True)
+		return result
 
 	def getOrderInfo(self, subject, body, price):
 		orderInfo = 'partner="%s"' % self.PARTNER
@@ -135,7 +140,6 @@ class Pay:
 		return key
 
 	def sign(self, content):
-		SignUtils = autoclass('com.alipay.sdk.pay.demo.SignUtils')
 		return SignUtils.sign(content, self.RSA_PRIVATE)
 
 	def getSignType(self):
@@ -144,10 +148,11 @@ class Pay:
 def pay_test():
 	test()
 	#s = paydemo()
-	s = 'none'
+	s = 'none\n'
 	try:
 		p = Pay()
-		p.pay()
+		s += str(p.pay()) + '\n'
+		s += str(PayTask) + '\n'
 	except Exception, ex:
 		s += str(ex) + '\n'
 	toast('abc')
