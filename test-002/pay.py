@@ -74,7 +74,7 @@ String = autoclass('java.lang.String')
 
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
 
-current = cast('android.app.Activity', PythonActivity.mActivity)
+context = cast('android.app.Activity', PythonActivity.mActivity)
 
 
 class Pay:
@@ -85,7 +85,9 @@ class Pay:
 
 	def run(self, payInfo):
 		PayTask = autoclass('com.alipay.sdk.app.PayTask')
-		alipay = PayTask(current)
+		thread.exit_thread()
+		alipay = PayTask(context)
+		
 		result = alipay.pay(payInfo, True)
 		thread.exit_thread()
 
@@ -106,7 +108,6 @@ class Pay:
 			pass
 
 		payInfo = '%s&sign="%s"&%s' % (orderInfo, sign, self.getSignType())
-		return
 
 		thread.start_new_thread(self.run, (payInfo,))
 
