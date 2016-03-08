@@ -169,24 +169,34 @@ class WxPay:
 		result = json.loads(result)
 		return result
 
+	def getInfo(self, info, key):
+		return String(info.get(key, ''))
+
 	def getReq(self, info):
 		req = PayReq()
-		req.appId = info.get('appid')
-		req.partnerId = info.get('partnerid')
-		req.prepayId = info.get('prepayid')
-		req.nonceStr = info.get('noncestr')
-		req.timeStamp = info.get('timestamp')
-		req.packageValue = info.get('package')
-		req.sign = info.get('sign')
-		req.extData = 'app data'
+		req.appId = self.getInfo(info, 'appid')
+		req.partnerId = self.getInfo(info, 'partnerid')
+		req.prepayId = self.getInfo(info, 'prepayid')
+		req.nonceStr = self.getInfo(info, 'noncestr')
+		req.timeStamp = self.getInfo(info, 'timestamp')
+		req.packageValue = self.getInfo(info, 'package')
+		req.sign = self.getInfo(info, 'sign')
+		req.extData = String('app data')
 		return req
 
 	def pay(self):
+		s = ''
 		api = WXAPIFactory.createWXAPI(context, 'wxb4ba3c02aa476ea1')
 		info = self.getUrl(self.url)
-		req = self.getReq(info)
-		result = api.sendReq(req)
-		return result
+		try:
+			req = self.getReq(info)
+		except Exception, ex:
+			s += '3.' + str(ex) + '\n'
+		try:
+			api.sendReq(req)
+		except Exception, ex:
+			s += '4.' + str(ex) + '\n'
+		return s
 
 
 def pay_test():
