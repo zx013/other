@@ -1,8 +1,11 @@
 #-*- coding:utf-8 -*-
 import jnius_config
-jnius_config.add_classpath('.', 'alipaySdk-20160120.jar', 'paydemoactivity.jar')
+jnius_config.add_classpath('.', 'alipaySdk-20160120.jar', 'paydemoactivity.jar', 'libammsdk.jar')
 from jnius import autoclass, cast
 from toast import toast
+
+PythonActivity = autoclass('org.renpy.android.PythonActivity')
+context = cast('android.app.Activity', PythonActivity.mActivity)
 
 '''
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
@@ -13,21 +16,12 @@ Bundle = autoclass('android.os.Bundle')
 String = autoclass('java.lang.String')
 
 current = cast('android.app.Activity', PythonActivity.mActivity)
-'''
-
-def test():
-	Stack = autoclass('java.util.Stack')
-	stack = Stack()
-	stack.push('hello')
-	stack.push('world')
-	stack.pop()
 
 #AndroidManifest.xml
 #<uses-permission android:name='android.permission.INTERNET' />
 #<activity android:name='com.alipay.sdk.pay.demo.H5PayDemoActivity' />
 #modify: .buildozer/android/platform/python-for-android/dist/myapp/templates/AndroidManifest.tmpl.xml
 #delete: setContentView(R.layout.pay_main);
-'''
 def h5paydemo():
 	H5PayDemoActivity = autoclass('com.alipay.sdk.pay.demo.H5PayDemoActivity')
 	s = ''
@@ -80,11 +74,7 @@ PayTask = autoclass('com.alipay.sdk.app.PayTask')
 SignUtils = autoclass('com.alipay.sdk.pay.demo.SignUtils')
 
 
-PythonActivity = autoclass('org.renpy.android.PythonActivity')
-context = cast('android.app.Activity', PythonActivity.mActivity)
-
-
-class Pay:
+class AliPay:
 	PARTNER = ''
 	SELLER = ''
 	RSA_PRIVATE = ''
@@ -128,7 +118,7 @@ class Pay:
 
 		#thread.start_new_thread(self.run, (payInfo,))
 		#Clock.create_trigger(functools.partial(self.run, payInfo))()
-		
+
 		result = self.run(payInfo)
 		return result
 
@@ -161,12 +151,49 @@ class Pay:
 	def getSignType(self):
 		return 'sign_type="RSA"'
 
+
+import urllib2
+import json
+
+WXAPIFactory = autoclass('com.tencent.mm.sdk.openapi.WXAPIFactory')
+PayReq = autoclass('com.tencent.mm.sdk.modelpay.PayReq')
+
+class WxPay:
+	APP_ID = 'wxd930ea5d5a258f4f'
+	url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
+
+	def getUrl(self, url):
+		request = urllib2.Request(url)
+		data = urllib2.urlopen(request)
+		result = data.read()
+		result = json.loads(result)
+		return result
+
+	def getReq(self, info):
+		req = PayReq()
+		req.appId = info.get('appid')
+		req.partnerId = info.get('partnerid')
+		req.prepayId = info.get('prepayid')
+		req.nonceStr = info.get('noncestr')
+		req.timeStamp = info.get('timestamp')
+		req.packageValue = info.get('package')
+		req.sign = info.get('sign')
+		req.extData = 'app data'
+		return req
+
+	def pay(self):
+		api = WXAPIFactory.createWXAPI(context, 'wxb4ba3c02aa476ea1')
+		info = self.getUrl(self.url)
+		req = self.getReq(info)
+		result = api.sendReq(req)
+		return result
+
+
 def pay_test():
-	test()
-	#s = paydemo()
 	s = 'none\n'
 	try:
-		p = Pay()
+		#p = AliPay()
+		p = WxPay()
 		result = p.pay()
 		s += str(result) + '\n'
 	except Exception, ex:
@@ -175,5 +202,7 @@ def pay_test():
 
 
 if __name__ == '__main__':
-	p = Pay()
+	p = AliPay()
 	print p.getOrderInfo('test good', 'test good info', '0.01')
+	p = WxPay()
+	print p.getUrl(p.url)
