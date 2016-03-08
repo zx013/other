@@ -66,10 +66,12 @@ def popup():
 '''
 
 
+from kivy.clock import Clock
+
 import time
 import random
 import urllib
-import thread
+#import functools
 
 String = autoclass('java.lang.String')
 #URLEncoder = autoclass('java.net.URLEncoder')
@@ -89,9 +91,22 @@ class Pay:
 	RSA_PUBLIC = ''
 
 	def run(self, payInfo):
-		#alipay = PayTask(context)
-		#result = alipay.pay(payInfo, True)
-		thread.exit_thread()
+		alipay = PayTask(context)
+		result = alipay.pay(payInfo, True)
+
+		try:
+			result = dict([v.split('=') for v in result.replace('{', '').replace('}', '').split(';')])
+		except:
+			result = {}
+		resultStatus = result.get('resultStatus')
+
+		if resultStatus == '9000':
+			toast('支付成功')
+		elif resultStatus == '8000':
+			toast('支付结果确认中')
+		else:
+			toast('支付失败')
+		return result
 
 	def pay(self):
 		if self.PARTNER == '' or self.RSA_PRIVATE == '' or self.SELLER == '':
@@ -111,9 +126,10 @@ class Pay:
 
 		payInfo = '%s&sign="%s"&%s' % (orderInfo, sign, self.getSignType())
 
-		thread.start_new_thread(self.run, (payInfo,))
-		alipay = PayTask(context)
-		result = alipay.pay(payInfo, True)
+		#thread.start_new_thread(self.run, (payInfo,))
+		#Clock.create_trigger(functools.partial(self.run, payInfo))()
+		
+		result = self.run(payInfo)
 		return result
 
 	def getOrderInfo(self, subject, body, price):
@@ -151,11 +167,10 @@ def pay_test():
 	s = 'none\n'
 	try:
 		p = Pay()
-		s += str(p.pay()) + '\n'
-		s += str(PayTask) + '\n'
+		result = p.pay()
+		s += str(result) + '\n'
 	except Exception, ex:
 		s += str(ex) + '\n'
-	toast('abc')
 	return s
 
 
