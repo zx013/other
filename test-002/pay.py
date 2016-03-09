@@ -174,22 +174,36 @@ class WxPay:
 
 	def getReq(self, info):
 		req = PayReq()
-		req.appId = self.getInfo(info, 'appid')
-		req.partnerId = self.getInfo(info, 'partnerid')
-		req.prepayId = self.getInfo(info, 'prepayid')
-		req.nonceStr = self.getInfo(info, 'noncestr')
-		req.timeStamp = self.getInfo(info, 'timestamp')
-		req.packageValue = self.getInfo(info, 'package')
-		req.sign = self.getInfo(info, 'sign')
-		req.extData = String('app data')
-		return req
+		s = ''
+		try:
+			req.appId = self.getInfo(info, 'appid')
+			req.partnerId = self.getInfo(info, 'partnerid')
+		except Exception, ex:
+			s += 'a.' + str(req.appId) + '\n'
+		try:
+			req.prepayId = self.getInfo(info, 'prepayid')
+			req.nonceStr = self.getInfo(info, 'noncestr')
+		except Exception, ex:
+			s += 'b.' + str(req.prepayId) + '\n'
+		try:
+			req.timeStamp = self.getInfo(info, 'timestamp')
+			req.packageValue = self.getInfo(info, 'package')
+		except Exception, ex:
+			s += 'c.' + str(req.timeStamp) + '\n'
+		try:
+			req.sign = self.getInfo(info, 'sign')
+			req.extData = String('app data')
+		except Exception, ex:
+			s += 'd.' + str(req.sign) + '\n'
+		return req, s
 
 	def pay(self):
 		s = ''
 		api = WXAPIFactory.createWXAPI(context, 'wxb4ba3c02aa476ea1')
 		info = self.getUrl(self.url)
 		try:
-			req = self.getReq(info)
+			req, sa = self.getReq(info)
+			s += sa
 		except Exception, ex:
 			s += '3.' + str(ex) + '\n'
 		try:
