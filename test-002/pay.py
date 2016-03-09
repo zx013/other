@@ -176,6 +176,13 @@ class WxPay:
 		req = PayReq()
 		s = ''
 		try:
+			s += 'x.' + str(req.appId) + '\n'
+			req.appId = 'wxd930ea5d5a258f4f'
+			s += 'y.' + str(req.appId) + '\n'
+		except Exception, ex:
+			pass
+
+		try:
 			req.appId = self.getInfo(info, 'appid')
 			req.partnerId = self.getInfo(info, 'partnerid')
 		except Exception, ex:
@@ -207,7 +214,7 @@ class WxPay:
 		except Exception, ex:
 			s += '3.' + str(ex) + '\n'
 		try:
-			api.sendReq(req)
+			s += str(api.sendReq(req)) + '\n'
 		except Exception, ex:
 			s += '4.' + str(ex) + '\n'
 		return s
