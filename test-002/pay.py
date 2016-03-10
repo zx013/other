@@ -159,7 +159,7 @@ WXAPIFactory = autoclass('com.tencent.mm.sdk.openapi.WXAPIFactory')
 PayReq = autoclass('com.tencent.mm.sdk.modelpay.PayReq')
 
 class WxPay:
-	APP_ID = 'wxd930ea5d5a258f4f'
+	APP_ID = 'wxb4ba3c02aa476ea1'
 	url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
 
 	def getUrl(self, url):
@@ -172,52 +172,46 @@ class WxPay:
 	def getInfo(self, info, key):
 		return String(info.get(key, ''))
 
-	def getReq(self, info):
+	def getReq(self):
+		wxpay = autoclass('wxpay.wxpay')
+		wp = wxpay()
+		req = wp.getReq()
+		return req
+
 		req = PayReq()
 		s = ''
 		try:
 			s += 'x.' + str(req.appId) + '\n'
-			req.appId = 'wxd930ea5d5a258f4f'
+			s += 't.%s, %s' % (str(hasattr(req, 'appId')), type(req.appId)) + '\n'
+			#req.appId = 'wxd930ea5d5a258f4f'
+			setattr(req, 'appId', 'wxd930ea5d5a258f4f')
 			s += 'y.' + str(req.appId) + '\n'
 		except Exception, ex:
-			pass
+			s += 'z.' + str(req.appId) + '\n'
 
 		try:
 			req.appId = self.getInfo(info, 'appid')
 			req.partnerId = self.getInfo(info, 'partnerid')
 		except Exception, ex:
 			s += 'a.' + str(req.appId) + '\n'
-		try:
-			req.prepayId = self.getInfo(info, 'prepayid')
-			req.nonceStr = self.getInfo(info, 'noncestr')
-		except Exception, ex:
-			s += 'b.' + str(req.prepayId) + '\n'
-		try:
-			req.timeStamp = self.getInfo(info, 'timestamp')
-			req.packageValue = self.getInfo(info, 'package')
-		except Exception, ex:
-			s += 'c.' + str(req.timeStamp) + '\n'
-		try:
-			req.sign = self.getInfo(info, 'sign')
-			req.extData = String('app data')
-		except Exception, ex:
-			s += 'd.' + str(req.sign) + '\n'
+
+		req.prepayId = self.getInfo(info, 'prepayid')
+		req.nonceStr = self.getInfo(info, 'noncestr')
+		req.timeStamp = self.getInfo(info, 'timestamp')
+		req.packageValue = self.getInfo(info, 'package')
+		req.sign = self.getInfo(info, 'sign')
+		req.extData = String('app data')
 		return req, s
 
 	def pay(self):
 		s = ''
 		api = WXAPIFactory.createWXAPI(context, 'wxb4ba3c02aa476ea1')
-		info = self.getUrl(self.url)
-		try:
-			req, sa = self.getReq(info)
-			s += sa
-		except Exception, ex:
-			s += '3.' + str(ex) + '\n'
-		try:
-			s += str(api.sendReq(req)) + '\n'
-		except Exception, ex:
-			s += '4.' + str(ex) + '\n'
-		return s
+		api.registerApp(self.APP_ID)
+		#info = self.getUrl(self.url)
+		req = self.getReq()
+		result = api.sendReq(req)
+
+		return result
 
 
 def pay_test():
