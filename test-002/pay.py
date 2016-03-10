@@ -173,7 +173,8 @@ class WxPay:
 		return String(info.get(key, ''))
 
 	def getReq(self):
-		wxpay = autoclass('wxpay.wxpay')
+		#直接赋值会报错，放在jar里面则不会出错
+		wxpay = autoclass('wxapi.WXPay')
 		wp = wxpay()
 		req = wp.getReq()
 		return req
@@ -209,7 +210,7 @@ class WxPay:
 		api.registerApp(self.APP_ID)
 		#info = self.getUrl(self.url)
 		req = self.getReq()
-		result = api.sendReq(req)
+		result = api.sendReq(req) #result is True, but wx is not open
 
 		return result
 
