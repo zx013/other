@@ -3,9 +3,11 @@ import jnius_config
 jnius_config.add_classpath('.', 'alipaySdk-20160120.jar', 'paydemoactivity.jar', 'libammsdk.jar')
 from jnius import autoclass, cast
 from toast import toast
+from tools import *
 
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
 context = cast('android.app.Activity', PythonActivity.mActivity)
+
 
 '''
 PythonActivity = autoclass('org.renpy.android.PythonActivity')
@@ -75,6 +77,7 @@ SignUtils = autoclass('com.alipay.sdk.pay.demo.SignUtils')
 
 
 class AliPay:
+	NOTIFY_URL = 'http://notify.msp.hk/notify.htm'
 	PARTNER = ''
 	SELLER = ''
 	RSA_PRIVATE = ''
@@ -125,11 +128,11 @@ class AliPay:
 	def getOrderInfo(self, subject, body, price):
 		orderInfo = 'partner="%s"' % self.PARTNER
 		orderInfo += '&seller_id="%s"' % self.SELLER
-		orderInfo += '&out_trade_no="%s"' % self.getOutTradeNo()
+		orderInfo += '&out_trade_no="%s"' % getOutTradeNo()
 		orderInfo += '&subject="%s"' % subject
 		orderInfo += '&body="%s"' % body
 		orderInfo += '&total_fee="%s"' % price
-		orderInfo += '&notify_url="%s"' % 'http://notify.msp.hk/notify.htm'
+		orderInfo += '&notify_url="%s"' % self.NOTIFY_URL
 		orderInfo += '&service="mobile.securitypay.pay"'
 		orderInfo += '&payment_type="1"'
 		orderInfo += '&_input_charset="utf-8"'
@@ -139,12 +142,6 @@ class AliPay:
 		#orderInfo += '&paymethod="expressGateway"'
 		return orderInfo
 
-	def getOutTradeNo(self):
-		key = str(int(time.time() * 1000))
-		key += str(random.random())[2:]
-		key = key[:20]
-		return key
-
 	def sign(self, content):
 		return SignUtils.sign(content, self.RSA_PRIVATE)
 
@@ -152,22 +149,73 @@ class AliPay:
 		return 'sign_type="RSA"'
 
 
+
+import urllib
 import urllib2
 import json
+
 
 WXAPIFactory = autoclass('com.tencent.mm.sdk.openapi.WXAPIFactory')
 PayReq = autoclass('com.tencent.mm.sdk.modelpay.PayReq')
 
 class WxPay:
+	NOTIFY_URL = 'http://notify.msp.hk/notify.htm'
+	ACCESS_TOKEN = ''
 	APP_ID = 'wxb4ba3c02aa476ea1'
-	url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
+	PARTNER_ID = ''
+	PARTNER_KEY = ''
 
-	def getUrl(self, url):
-		request = urllib2.Request(url)
+	def __init__(self):
+		Clock.schedule_interval(self.getAccessToken, 3500)
+
+	@error_func()
+	def getUrl(self, url, **kwargs):
+		request = urllib2.Request(url=url, **kwargs)
 		data = urllib2.urlopen(request)
 		result = data.read()
 		result = json.loads(result)
 		return result
+
+	@repeat_func(3)
+	def getAccessToken(self):
+		url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=APPSECRET' % self.APP_ID
+		result = self.getUrl(url)
+		if not result:
+			return
+		if result.has_key('errcode'):
+			return
+		self.ACCESS_TOKEN = result['access_token']
+
+	def getPackage(self, body, attach, total_fee):
+		package = 'bank_type=WX'
+		package += '&body=%s' % body
+		package += '&attach=%s' % attach
+		package += '&partner=%s' % self.PARTNER_ID
+		package += '&out_trade_no=%s' % getOutTradeNo()
+		package += '&total_fee=%s' % total_fee
+		package += '&fee_type=1'
+		package += '&notify_url=%s' % self.NOTIFY_URL
+		package += '&spbill_create_ip=%s' % getIp()
+		package += '&input_charset="UTF-8"'
+		package += '&key=%s' % self.PARTNER_KEY
+		return package
+
+	def sign(self, package):
+		value = getMd5(package)
+		value = value.upper()
+		package = urllib.quote(package, safe='=&')
+		package += '&sign=%s' % value
+		return package
+
+	def getOrder(self):
+		url = 'https://api.weixin.qq.com/pay/genprepay?access_token=%s' % self.ACCESS_TOKEN
+		result = self.getUrl(url)
+		if not result:
+			return
+		if result.get('errcode') != 0:
+			return
+		prepayid = result['prepayid']
+
 
 	def getInfo(self, info, key):
 		return String(info.get(key, ''))
@@ -208,7 +256,8 @@ class WxPay:
 		s = ''
 		api = WXAPIFactory.createWXAPI(context, 'wxb4ba3c02aa476ea1')
 		api.registerApp(self.APP_ID)
-		#info = self.getUrl(self.url)
+		#url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
+		#info = self.getUrl(url)
 		req = self.getReq()
 		result = api.sendReq(req) #result is True, but wx is not open
 
