@@ -65,7 +65,6 @@ def popup():
 from kivy.clock import Clock
 
 import time
-import random
 import urllib
 #import functools
 
@@ -153,6 +152,7 @@ class AliPay:
 import urllib
 import urllib2
 import json
+import time
 
 
 WXAPIFactory = autoclass('com.tencent.mm.sdk.openapi.WXAPIFactory')
@@ -162,11 +162,14 @@ class WxPay:
 	NOTIFY_URL = 'http://notify.msp.hk/notify.htm'
 	ACCESS_TOKEN = ''
 	APP_ID = 'wxb4ba3c02aa476ea1'
-	PARTNER_ID = ''
-	PARTNER_KEY = ''
+	APP_KEY = 'L8LrMqqeGRxST5reouB0K66CaYAWpqhAVsq7ggKkxHCOastWksvuX1uvmvQclxaHoYd3ElNBrNO2DHnnzgfVG9Qs473M3DTOZug5er46FhuGofumV8H2FVR9qkjSlC5K'
+	PARTNER_ID = '1900000109'
+	PARTNER_KEY = '8934e7d15453e97507ef794cf7b0519d'
 
 	def __init__(self):
 		Clock.schedule_interval(self.getAccessToken, 3500)
+		#while self.ACCESS_TOKEN:
+		#	pass
 
 	@error_func()
 	def getUrl(self, url, **kwargs):
@@ -185,42 +188,92 @@ class WxPay:
 		if result.has_key('errcode'):
 			return
 		self.ACCESS_TOKEN = result['access_token']
+		return self.ACCESS_TOKEN
+
 
 	def getPackage(self, body, attach, total_fee):
-		package = 'bank_type=WX'
-		package += '&body=%s' % body
-		package += '&attach=%s' % attach
-		package += '&partner=%s' % self.PARTNER_ID
-		package += '&out_trade_no=%s' % getOutTradeNo()
-		package += '&total_fee=%s' % total_fee
-		package += '&fee_type=1'
-		package += '&notify_url=%s' % self.NOTIFY_URL
-		package += '&spbill_create_ip=%s' % getIp()
-		package += '&input_charset="UTF-8"'
-		package += '&key=%s' % self.PARTNER_KEY
+		package = {
+			'bank_type': 'WX',
+			'body': body,
+			'attach': attach,
+			'partner': self.PARTNER_ID,
+			'out_trade_no': getOutTradeNo(),
+			'total_fee': total_fee,
+			'fee_type': '1',
+			'notify_url': self.NOTIFY_URL,
+			'spbill_create_ip': getIp(),
+			'input_charset': '"UTF-8"',
+			'key': self.PARTNER_KEY
+		}
 		return package
 
-	def sign(self, package):
-		value = getMd5(package)
-		value = value.upper()
-		package = urllib.quote(package, safe='=&')
-		package += '&sign=%s' % value
+	def signPackage(self, package):
+		sign = getMd5(getData(package))
+		sign = sign.upper()
+		package['sign'] = sign
 		return package
 
-	def getOrder(self):
+
+	def getOrder(self, body, attach, total_fee):
+		package = self.getPackage(body, attach, total_fee)
+		package = self.signPackage(package)
+		order = {
+			'appid': self.APP_ID,
+			'appkey': self.APP_KEY,
+			'noncestr': getOutTradeNo(),
+			'package': getData(package, urllib.quote),
+			'timestamp': str(int(time.time())),
+			'traceid': 'test_1399514976'
+		}
+		return order
+	
+	def signOrder(self, order):
+		sign = getSha1(getData(order))
+		order['sign_method'] = 'sha1',
+		order['app_signature'] = sign
+		return order
+
+	@repeat_func(3)
+	def postOrder(self, body, attach, total_fee):
+		order = self.getOrder(body, attach, total_fee)
+		order = self.signOrder(order)
+		'''
 		url = 'https://api.weixin.qq.com/pay/genprepay?access_token=%s' % self.ACCESS_TOKEN
-		result = self.getUrl(url)
+		result = self.getUrl(url, **order)
 		if not result:
 			return
 		if result.get('errcode') != 0:
 			return
-		prepayid = result['prepayid']
+		'''
+		#order['prepayid'] = result['prepayid']
+		order['prepayid'] = ''
+		return order
 
 
-	def getInfo(self, info, key):
-		return String(info.get(key, ''))
+	def getRequest(self, order):
+		request = {
+			'appid': self.APP_ID,
+			'appkey': self.APP_KEY,
+			'noncestr': order['noncestr'],
+			'package': 'Sign=WXPay',
+			'partnerid': self.PARTNER_ID,
+			'prepayid': order['prepayid'],
+			'timestamp': str(int(time.time()))
+		}
+		return request
 
-	def getReq(self):
+	def signRequest(self, request):
+		sign = getSha1(getData(request))
+		del request['appkey']
+		request['sign'] = sign
+		return request
+
+
+	def getPayReq(self, body, attach, total_fee):
+		order = self.postOrder(body, attach, total_fee)
+		request = self.getRequest(order)
+		request = self.signRequest(request)
+		request = json.dumps(request)
 		#直接赋值会报错，放在jar里面则不会出错
 		wxpay = autoclass('wxapi.WXPay')
 		wp = wxpay()
@@ -254,11 +307,11 @@ class WxPay:
 
 	def pay(self):
 		s = ''
-		api = WXAPIFactory.createWXAPI(context, 'wxb4ba3c02aa476ea1')
+		api = WXAPIFactory.createWXAPI(context, self.APP_ID)
 		api.registerApp(self.APP_ID)
 		#url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
 		#info = self.getUrl(url)
-		req = self.getReq()
+		req = self.getPayReq('test', 'test info', '100')
 		result = api.sendReq(req) #result is True, but wx is not open
 
 		return result

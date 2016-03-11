@@ -1,12 +1,13 @@
 #-*- coding:utf-8 -*-
 import socket
 import hashlib
+import random
 from functools import wraps
 from itertools import repeat
 
 def error_func(base=None):
 	def run_func(func):
-		@wraps
+		#@wraps
 		def run(*argv, **kwargv):
 			try:
 				return func(*argv, **kwargv)
@@ -17,7 +18,7 @@ def error_func(base=None):
 
 def repeat_func(num=None):
 	def run_func(func):
-		@wraps
+		#@wraps
 		def run(*argv, **kwargv):
 			for i in repeat(0, num + 1 if num > 0 else 1) if isinstance(num, int) else repeat(0):
 				ret = func(*argv, **kwargv)
@@ -43,6 +44,16 @@ def getIp():
 	return ip
 
 def getMd5(s):
-	m5 = hashlib.md5()   
-	m5.update(s)   
-	return m5.hexdigest()
+	md = hashlib.md5(s)
+	return md.hexdigest()
+
+def getSha1(s):
+	sh = hashlib.sha1(s)
+	return sh.hexdigest()
+
+def getData(data, func=lambda x: x):
+	s = ''
+	for key in sorted(data):
+		s += '&%s=%s' % (key, func(data[key]))
+	s = s[1:]
+	return s
