@@ -167,12 +167,13 @@ class WxPay:
 	PARTNER_ID = '1900000109'
 	PARTNER_KEY = '8934e7d15453e97507ef794cf7b0519d'
 
-	def __init__(self):
-		Clock.schedule_interval(self.getAccessToken, 3500)
+	#def __init__(self):
+	#	Clock.schedule_interval(self.getAccessToken, 3500)
 		#while self.ACCESS_TOKEN:
 		#	pass
 
-	#@error_func({})
+	#<uses-permission android:name="android.permission.INTERNET" />
+	@error_func({})
 	def getUrl(self, url, **kwargs):
 		request = urllib2.Request(url=url, **kwargs)
 		data = urllib2.urlopen(request)
@@ -271,26 +272,20 @@ class WxPay:
 
 
 	def getPayReq(self, body, attach, total_fee):
-		#order = self.postOrder(body, attach, total_fee)
-		#request = self.getRequest(order)
-		#request = self.signRequest(request)
-		#request = json.dumps(request)
+		order = self.postOrder(body, attach, total_fee)
+		request = self.getRequest(order)
+		request = self.signRequest(request)
+		request = json.dumps(request)
 
 		s = ''
-		url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
-		try:
-			info = self.getUrl(url)
-		except Exception, ex:
-			s += str(ex) + '\n'
-			info = {}
-		request = json.dumps(info)
-		request = '{"package": "Sign=WXPay", "timestamp": "1457923637", "sign": "7AE432C4BB1487C456810907EB177A9A", "partnerid": "10000100", "appid": "wxb4ba3c02aa476ea1", "prepayid": "wx201603141047170fba32a1bd0377534120", "noncestr": "c691d8615bb9a32e27733e800d3d08e3"}'
+		#url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
+		#info = self.getUrl(url)
+		#request = json.dumps(info)
 
 		#直接赋值会报错，放在jar里面则不会出错
 		wxpay = autoclass('wxapi.WXPay')
 		wp = wxpay()
 		req = wp.getReq(String(request))
-		s += str(req.appId) + '\n'
 		return req, s
 
 
