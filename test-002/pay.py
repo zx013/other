@@ -149,10 +149,10 @@ class AliPay:
 
 
 
-import urllib
+#import urllib
 import urllib2
 import json
-import time
+#import time
 
 
 WXAPIFactory = autoclass('com.tencent.mm.sdk.openapi.WXAPIFactory')
@@ -172,7 +172,7 @@ class WxPay:
 		#while self.ACCESS_TOKEN:
 		#	pass
 
-	@error_func()
+	#@error_func({})
 	def getUrl(self, url, **kwargs):
 		request = urllib2.Request(url=url, **kwargs)
 		data = urllib2.urlopen(request)
@@ -271,51 +271,36 @@ class WxPay:
 
 
 	def getPayReq(self, body, attach, total_fee):
-		order = self.postOrder(body, attach, total_fee)
-		request = self.getRequest(order)
-		request = self.signRequest(request)
-		request = json.dumps(request)
+		#order = self.postOrder(body, attach, total_fee)
+		#request = self.getRequest(order)
+		#request = self.signRequest(request)
+		#request = json.dumps(request)
+
+		s = ''
+		url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
+		try:
+			info = self.getUrl(url)
+		except Exception, ex:
+			s += str(ex) + '\n'
+			info = {}
+		request = json.dumps(info)
+		request = '{"package": "Sign=WXPay", "timestamp": "1457923637", "sign": "7AE432C4BB1487C456810907EB177A9A", "partnerid": "10000100", "appid": "wxb4ba3c02aa476ea1", "prepayid": "wx201603141047170fba32a1bd0377534120", "noncestr": "c691d8615bb9a32e27733e800d3d08e3"}'
+
 		#直接赋值会报错，放在jar里面则不会出错
 		wxpay = autoclass('wxapi.WXPay')
 		wp = wxpay()
-		req = wp.getReq()
-		return req
-
-		req = PayReq()
-		s = ''
-		try:
-			s += 'x.' + str(req.appId) + '\n'
-			s += 't.%s, %s' % (str(hasattr(req, 'appId')), type(req.appId)) + '\n'
-			#req.appId = 'wxd930ea5d5a258f4f'
-			setattr(req, 'appId', 'wxd930ea5d5a258f4f')
-			s += 'y.' + str(req.appId) + '\n'
-		except Exception, ex:
-			s += 'z.' + str(req.appId) + '\n'
-
-		try:
-			req.appId = self.getInfo(info, 'appid')
-			req.partnerId = self.getInfo(info, 'partnerid')
-		except Exception, ex:
-			s += 'a.' + str(req.appId) + '\n'
-
-		req.prepayId = self.getInfo(info, 'prepayid')
-		req.nonceStr = self.getInfo(info, 'noncestr')
-		req.timeStamp = self.getInfo(info, 'timestamp')
-		req.packageValue = self.getInfo(info, 'package')
-		req.sign = self.getInfo(info, 'sign')
-		req.extData = String('app data')
+		req = wp.getReq(String(request))
+		s += str(req.appId) + '\n'
 		return req, s
+
 
 	def pay(self):
 		s = ''
 		api = WXAPIFactory.createWXAPI(context, self.APP_ID)
 		api.registerApp(self.APP_ID)
-		#url = 'http://wxpay.weixin.qq.com/pub_v2/app/app_pay.php?plat=android'
-		#info = self.getUrl(url)
-		req = self.getPayReq('test', 'test info', '100')
+		req, s = self.getPayReq('test', 'test info', '100')
 		result = api.sendReq(req) #result is True, but wx is not open
-
-		return result
+		return str(result) + '\n' + s
 
 
 def pay_test():
