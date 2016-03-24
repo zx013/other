@@ -68,7 +68,7 @@ class Base:
 		@wraps
 		def run(*args, **kwargs):
 			event.response(('FUNCTION_EVENT', func.func_name, 'before'), *args, **kwargs)
-			result = attr(*args, **kwargs)
+			result = func(*args, **kwargs)
 			result = event.response(('FUNCTION_EVENT', func.func_name, 'after'), result, *args, **kwargs)
 			return result
 		return run
