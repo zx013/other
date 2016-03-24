@@ -23,3 +23,90 @@
 
 #关联OBJECT
 #OBJECT和其它OBJECT关联，该OBJECT主动碰撞时影响到关联OBJECT
+
+
+class Event:
+	#注册事件
+	def register(self, e, *args, **kwargs):
+		pass
+
+	#事件的响应
+	def response(self, e, *args, **kwargs):
+		pass
+
+event = Event()
+
+
+from functools import wraps
+
+class Base:
+	#添加get方法
+	def _add_get(self, key, attr):
+		def _get(k, v=None):
+			return attr.get(k, v)
+		_get.func_name = 'get_%s' % key
+		setattr(self, _get.func_name, _get)
+	
+	#添加set方法
+	def _add_set(self, key, attr):
+		def _set(k, v):
+			attr[k] = v
+		_set.func_name = 'set_%s' % key
+		setattr(self, _set.func_name, _set)
+
+	#给字典类型添加读写接口
+	def wrap_interface(self):
+		for key, attr in vars(self).items():
+			if not isinstance(attr, dict):
+				continue
+			self._add_get(key, attr)
+			self._add_set(key, attr)
+
+	def _wrap_event(self, func):
+		event.register(('FUNCTION_EVENT', func.func_name, 'before'))
+		event.register(('FUNCTION_EVENT', func.func_name, 'after'))
+		@wraps
+		def run(*args, **kwargs):
+			event.response(('FUNCTION_EVENT', func.func_name, 'before'), *args, **kwargs)
+			result = attr(*args, **kwargs)
+			result = event.response(('FUNCTION_EVENT', func.func_name, 'after'), result, *args, **kwargs)
+			return result
+		return run
+
+	#在函数前后绑定事件
+	def wrap_event(self):
+		for key, attr in vars(self).items():
+			if not hasattr(attr, '__call__'):
+				continue
+			attr = self._wrap_event(attr)
+
+
+class Object(Base):
+	def __init__(self, *args):
+		#静态属性，不变化或者极少变化的值
+		self.attribute = {}
+
+		#动态属性，随时都能变化的值
+		self.property = {}
+
+		#包含的buffer
+		self.point_buffer = []
+
+
+class Buffer:
+	def __init__(self):
+		#属于的object
+		self.point_object = None
+
+
+def main():
+	o = Object()
+	o.wrap_interface()
+	o.wrap_event()
+	o.set_property('a', 1)
+	print o.get_property('a')
+	print o.get_attribute('a', 2)
+
+
+if __name__ == '__main__':
+	main()
