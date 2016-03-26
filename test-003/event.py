@@ -26,12 +26,21 @@
 
 
 class Event:
+	def __init__(self):
+		self.event = {}
+
 	#注册事件
 	def register(self, e, *args, **kwargs):
-		pass
+		self.event[e] = []
 
-	#事件的响应
-	def response(self, e, *args, **kwargs):
+	#生成事件
+	def create(self, e, *args, **kwargs):
+		for func in self.event[e]:
+			if hasattr(func, '__call__'):
+				func(*args, **kwargs)
+
+	#绑定事件
+	def bind(self, e, *args, **kwargs):
 		pass
 
 event = Event()
@@ -67,9 +76,9 @@ class Base:
 		event.register(('FUNCTION_EVENT', func.func_name, 'after'))
 		@wraps
 		def run(*args, **kwargs):
-			event.response(('FUNCTION_EVENT', func.func_name, 'before'), *args, **kwargs)
+			event.create(('FUNCTION_EVENT', func.func_name, 'before'), *args, **kwargs)
 			result = func(*args, **kwargs)
-			result = event.response(('FUNCTION_EVENT', func.func_name, 'after'), result, *args, **kwargs)
+			result = event.create(('FUNCTION_EVENT', func.func_name, 'after'), result, *args, **kwargs)
 			return result
 		return run
 
