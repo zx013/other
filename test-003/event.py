@@ -123,14 +123,14 @@ class Map:
 #描述物体的形状
 class Shape:
 	def __init__(self, **kwargs):
-		#形状，圆形circle为True，矩形rectangle为False
-		self.type = kwargs.get('type', 'circle') == 'circle'
+		#形状，圆形circle，矩形rectangle，扇形sector
+		self.type = kwargs.get('type', 'circle')
 
 		#半径
 		self.radius = kwargs.get('radius', 0)
 
 		#长宽，圆形长宽设置为直径
-		if self.type:
+		if self.type in ('circle', 'sector'):
 			self.width = 2 * self.radius
 			self.height = 2 * self.radius
 		else:
@@ -143,7 +143,7 @@ class Shape:
 	#判断两个形状是否碰撞
 	def collide(self, shape):
 		#圆形和矩形碰撞视为两个矩形的碰撞
-		if self.type and shape.type:
+		if self.type == 'circle' and shape.type == 'circle':
 			distance = Map.distance(self.pos, shape.pos)
 			if self.radius + shape.radius >= distance:
 				return True
@@ -174,9 +174,32 @@ class Shape:
 
 #描述移动的轨迹
 class Route:
+	def __init__(self, **kwargs):
+		#类型，圆弧arc，直线line
+		self.type = ''
+
+		#源点
+		self.source = ()
+
+		#目标点
+		self.target = ()
+
+		#运行速度
+		self.speed = 0
+
+		#运行时间
+		self.time = 0
+
+		#路径包含的点，从源点到目标点依次排列
+		self.point = []
+
 	#获取下一个路径点
 	def next(self):
 		pass
+
+	@staticmethod
+	def test():
+		route = Route(route=[Route(source=(0, 0), target=(0, 1), speed=1), Route(source=(0, 1), target=(1, 1), speed=1)])
 
 
 class Object(Base):
