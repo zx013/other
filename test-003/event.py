@@ -25,6 +25,18 @@
 #OBJECT和其它OBJECT关联，该OBJECT主动碰撞时影响到关联OBJECT
 
 
+import time
+
+class Time:
+	@staticmethod
+	def clock():
+		return int(time.time() * 1000)
+
+	@staticmethod
+	def sleep(tm):
+		time.sleep(tm / 1000.0)
+
+
 class Event:
 	def __init__(self):
 		self.event = {}
@@ -55,7 +67,7 @@ class Base:
 			return attr.get(k, v)
 		_get.func_name = 'get_%s' % key
 		setattr(self, _get.func_name, _get)
-	
+
 	#添加set方法
 	def _add_set(self, key, attr):
 		def _set(k, v):
@@ -98,14 +110,37 @@ class Object(Base):
 		#动态属性，随时都能变化的值
 		self.property = {}
 
-		#包含的buffer
+		#包含的buffer，按优先级排列，优先级相同的，按先后顺序
 		self.point_buffer = []
+
+	def create_buffer(self):
+		buf = Buffer()
+		return buf
+
+	def insert_buffer(self, buf):
+		n = 0
+		for n, b in enumerate(self.point_buffer):
+			if b.priority_level == buf.priority_level and b.create_time > buf.create_time or b.priority_level < buf.priority_level:
+				break
+		else:
+			n += 1
+		buf.point_object = self
+		self.point_buffer.insert(n, buf)
+
+	def delete_buffer(self, buf):
+		self.point_buffer.remove(buf)
 
 
 class Buffer:
 	def __init__(self):
 		#属于的object
 		self.point_object = None
+
+		#优先级，越大优先级越高
+		self.priority_level = 0
+
+		#创建时间
+		self.create_time = Time.clock()
 
 
 def main():
@@ -115,6 +150,24 @@ def main():
 	o.set_property('a', 1)
 	print o.get_property('a')
 	print o.get_attribute('a', 2)
+	buf1 = o.create_buffer()
+	buf1.priority_level = 0
+	o.insert_buffer(buf1)
+	Time.sleep(10)
+	buf2 = o.create_buffer()
+	buf2.priority_level = 3
+	o.insert_buffer(buf2)
+	Time.sleep(10)
+	buf3 = o.create_buffer()
+	buf3.priority_level = 3
+	o.insert_buffer(buf3)
+	Time.sleep(10)
+	buf4 = o.create_buffer()
+	buf4.priority_level = 0
+	o.insert_buffer(buf4)
+	print [b.create_time for b in o.point_buffer]
+	return o
+	
 
 
 if __name__ == '__main__':
