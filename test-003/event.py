@@ -37,6 +37,7 @@ class Time:
 		time.sleep(tm / 1000.0)
 
 
+
 class Event:
 	def __init__(self):
 		self.event = {}
@@ -56,6 +57,7 @@ class Event:
 		pass
 
 event = Event()
+
 
 
 from functools import wraps
@@ -102,8 +104,92 @@ class Base:
 			attr = self._wrap_event(attr)
 
 
+
+class Map:
+	#计算投影距离
+	@staticmethod
+	def shadow(pos1, pos2):
+		x1, y1 = pos1
+		x2, y2 = pos2
+		return abs(x2 - x1), abs(y2 - y1)
+
+	#计算两点距离
+	@staticmethod
+	def distance(pos1, pos2):
+		x1, y1 = pos1
+		x2, y2 = pos2
+		return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+
+#描述物体的形状
+class Shape:
+	def __init__(self, **kwargs):
+		#形状，圆形circle为True，矩形rectangle为False
+		self.type = kwargs.get('type', 'circle') == 'circle'
+
+		#半径
+		self.radius = kwargs.get('radius', 0)
+
+		#长宽，圆形长宽设置为直径
+		if self.type:
+			self.width = 2 * self.radius
+			self.height = 2 * self.radius
+		else:
+			self.width = kwargs.get('width', 0)
+			self.height = kwargs.get('height', 0)
+
+		#位置
+		self.pos = kwargs.get('pos', (0, 0))
+
+	#判断两个形状是否碰撞
+	def collide(self, shape):
+		#圆形和矩形碰撞视为两个矩形的碰撞
+		if self.type and shape.type:
+			distance = Map.distance(self.pos, shape.pos)
+			if self.radius + shape.radius >= distance:
+				return True
+			return False
+		else:
+			x, y = Map.shadow(self.pos, shape.pos)
+			if self.width + shape.width >= 2 * x and self.height + shape.height >= 2 * y:
+				return True
+			return False
+		return False
+
+	@staticmethod
+	def test():
+		s1 = Shape(type='circle', radius=2, pos=(0, 3))
+		s2 = Shape(type='circle', radius=3, pos=(3, 0))
+		s3 = Shape(type='circle', radius=0.9, pos=(3, 3))
+		print s1.collide(s2)
+		print s1.collide(s3)
+		print s2.collide(s3)
+
+		s1 = Shape(type='rectangle', width=4, height=4, pos=(0, 3))
+		s2 = Shape(type='rectangle', width=2, height=4, pos=(3, 0))
+		s3 = Shape(type='rectangle', width=1.9, height=1.9, pos=(3, 3))
+		print s1.collide(s2)
+		print s1.collide(s3)
+		print s2.collide(s3)
+
+
+#描述移动的轨迹
+class Route:
+	#获取下一个路径点
+	def next(self):
+		pass
+
+
 class Object(Base):
-	def __init__(self, *args):
+	def __init__(self):
+		#类型，如normal，skill等
+		self.type = ''
+
+		#形状，如圆形，矩形，扇形等
+		self.shape = Shape()
+
+		#轨迹
+		self.route = Route()
+
 		#静态属性，不变化或者极少变化的值
 		self.attribute = {}
 
@@ -112,6 +198,12 @@ class Object(Base):
 
 		#包含的buffer，按优先级排列，优先级相同的，按先后顺序
 		self.point_buffer = []
+
+		#碰撞其它obj施加的buffer
+		self.active_collide_buffer = []
+
+		#被其它obj碰撞施加的buffer
+		self.passive_collide_buffer = []
 
 	def create_buffer(self):
 		buf = Buffer()
@@ -130,6 +222,23 @@ class Object(Base):
 	def delete_buffer(self, buf):
 		self.point_buffer.remove(buf)
 
+	def _active_collide(self, obj):
+		for buf in self.active_collide_buffer:
+			obj.insert_buffer(buf)
+
+	def _passive_collide(self, obj):
+		for buf in self.passive_collide_buffer:
+			obj.insert_buffer(buf)
+
+	def active_collide(self, obj):
+		self._active_collide(obj)
+		obj._passive_collide(self)
+
+	def passive_collide(self, obj):
+		self._passive_collide(obj)
+		obj._active_collide(self)
+
+
 
 class Buffer:
 	def __init__(self):
@@ -141,6 +250,7 @@ class Buffer:
 
 		#创建时间
 		self.create_time = Time.clock()
+
 
 
 def main():
@@ -165,9 +275,11 @@ def main():
 	buf4 = o.create_buffer()
 	buf4.priority_level = 0
 	o.insert_buffer(buf4)
+	o.delete_buffer(buf3)
 	print [b.create_time for b in o.point_buffer]
+	Shape.test()
 	return o
-	
+
 
 
 if __name__ == '__main__':
