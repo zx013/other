@@ -146,10 +146,12 @@ class Geometry:
 			e = 2 * (y3 - y2)
 			f = x3 * x3 + y3 * y3 - x2 * x2 - y2 * y2
 			g = b * d - e * a
-			if not g:
-				return None
-			x = (b * f - e * c) / g
-			y = (d * c - a * f) / g
+			if g:
+				x = (b * f - e * c) / g
+				y = (d * c - a * f) / g
+			else:
+				x = None
+				y = None
 		return x, y
 
 	#两条线交点，平行返回None
@@ -166,10 +168,12 @@ class Geometry:
 		e = y21 - y22
 		f = x21 * y22 - x22 * y21
 		g = b * d - e * a
-		if not g:
-			return None
-		x = (a * f - d * c) / g
-		y = (b * f - e * c) / g
+		if g:
+			x = (a * f - d * c) / g
+			y = (b * f - e * c) / g
+		else:
+			x = None
+			y = None
 		return x, y
 
 	#线和弧的交点
@@ -179,38 +183,36 @@ class Geometry:
 		x12, y12 = map(float, line1.target)
 		x21, y21 = map(float, arc2.source)
 		x22, y22 = map(float, arc2.target)
-	
+
 
 	def intersect(wire1, wire2):
 		pass
 
-#线段
-class Line:
+#矩形
+class Rect:
 	def __init__(self, **kwargs):
-		#源点
-		self.source = kwargs.get('source', (0, 0))
+		#方向
+		self.direct = kwargs.get('direct', 0)
+		
+		#宽度
+		self.width = kwargs.get('width', 0)
+		
+		#高度
+		self.height = kwargs.get('height', 0)
 
-		#目标点
-		self.target = kwargs.get('target', (0, 0))
-
-#弧
-class Arc:
+#扇形
+class Sector:
 	def __init__(self, **kwargs):
-		#源点
-		self.source = kwargs.get('source', (0, 0))
-
-		#目标点
-		self.target = kwargs.get('target', (0, 0))
-
-		#圆弧的圆心，定义了则用定义的，没定义则用middle计算
-		if kwargs.has_key('center'):
-			self.center = kwargs['center']
-		else:
-			#中间点
-			self.middle = kwargs.get('middle', (0, 0))
-			self.center = Geometry.circle_center(self.source, self.target, self.middle)
+		#方向
+		self.direct = kwargs.get('direct', 0)
+		
 		#半径
-		self.radius = Geometry.distance(self.source, self.center)
+		self.radius = kwargs.get('radius', 0)
+
+		#角度
+		self.angle = kwargs.get('angle', 0)
+		
+		self.center = (0, 0)
 
 
 #描述物体的形状
@@ -265,6 +267,46 @@ class Shape:
 		print s2.collide(s3)
 
 
+#线段
+class Line:
+	def __init__(self, **kwargs):
+		#方向
+		self.direct = kwargs.get('direct', 0)
+
+		#长度
+		self.length = kwargs.get('length', 0)
+
+		#源点
+		self.source = (0, 0)
+
+		#目标点
+		self.target = (0, self.length)
+
+#弧
+class Arc:
+	def __init__(self, **kwargs):
+		#方向
+		self.direct = kwargs.get('direct', 0)
+
+		#长度
+		self.length = kwargs.get('length', 0)
+
+		#中间点
+		self.middle = kwargs.get('middle', (0, 0))
+
+		#源点
+		self.source = (0, 0)
+
+		#目标点
+		self.target = (0, self.length)
+
+		#圆弧的圆心
+		self.center = Geometry.circle_center(self.source, self.target, self.middle)
+
+		#半径
+		self.radius = Geometry.distance(self.source, self.center)
+
+
 #描述移动的轨迹
 class Route:
 	def __init__(self, **kwargs):
@@ -286,7 +328,7 @@ class Route:
 
 	@staticmethod
 	def test():
-		route = Route(line=[Line(source=(0, 0), target=(0, 1)), Line(source=(0, 1), target=(1, 1))], speed=1)
+		route = Route(line=[Line(length=1), Line(length=2)], speed=1)
 
 
 class Object(Base):
