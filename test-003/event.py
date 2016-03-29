@@ -105,6 +105,29 @@ class Base:
 
 
 
+class Line:
+	def __init__(self, **kwargs):
+		#类型，圆弧arc，直线line
+		self.type = kwargs.get('type', 'line') == 'line'
+
+		#源点
+		self.source = kwargs.get('source', (0, 0))
+
+		#目标点
+		self.target = kwargs.get('target', (0, 0))
+
+		#中间点
+		self.middle = kwargs.get('middle', (0, 0))
+
+		if not type:
+			#圆弧的圆心，定义了则用定义的，没定义则用middle计算
+			if kwargs.has_key('center'):
+				self.center = kwargs['center']
+			else:
+				self.center = Map.circle_center(self.source, self.target, self.middle)
+			#半径
+			self.radius = Map.distance(self.source, self.center)
+
 class Map:
 	#计算投影距离
 	@staticmethod
@@ -119,6 +142,58 @@ class Map:
 		x1, y1 = pos1
 		x2, y2 = pos2
 		return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+
+	#三点求圆，三点在同一条线上返回None
+	@staticmethod
+	def circle_center(pos1, pos2, pos3):
+		x1, y1 = map(float, pos1)
+		x2, y2 = map(float, pos2)
+		x3, y3 = map(float, pos3)
+		if pos1 == pos2 == pos3:
+			x = x1
+			y = y1
+		elif pos1 == pos2 != pos3:
+			x = (x1 + x3) / 2
+			y = (y1 + y3) / 2
+		elif pos1 == pos3 != pos2:
+			x = (x1 + x2) / 2
+			y = (y1 + y2) / 2
+		elif pos2 == pos3 != pos1:
+			x = (x1 + x2) / 2
+			y = (y1 + y2) / 2
+		else:
+			a = 2 * (x2 - x1)
+			b = 2 * (y2 - y1)
+			c = x2 * x2 + y2 * y2 - x1 * x1 - y1 * y1
+			d = 2 * (x3 - x2)
+			e = 2 * (y3 - y2)
+			f = x3 * x3 + y3 * y3 - x2 * x2 - y2 * y2
+			g = b * d - e * a
+			if not g:
+				return None
+			x = (b * f - e * c) / g
+			y = (d * c - a * f) / g
+		return x, y
+
+	#两条线交点，平行返回None
+	@staticmethod
+	def intersect_point(line1, line2):
+		x11, y11 = map(float, line1.source)
+		x12, y12 = map(float, line1.target)
+		x21, y21 = map(float, line2.source)
+		x22, y22 = map(float, line2.target)
+		a = x11 - x12
+		b = y11 - y12
+		c = x11 * y12 - x12 * y11
+		d = x21 - x22
+		e = y21 - y22
+		f = x21 * y22 - x22 * y21
+		g = b * d - e * a
+		if not g:
+			return None
+		x = (a * f - d * c) / g
+		y = (b * f - e * c) / g
+		return x, y
 
 #描述物体的形状
 class Shape:
@@ -175,14 +250,8 @@ class Shape:
 #描述移动的轨迹
 class Route:
 	def __init__(self, **kwargs):
-		#类型，圆弧arc，直线line
-		self.type = ''
-
-		#源点
-		self.source = ()
-
-		#目标点
-		self.target = ()
+		#轨迹包含的线段
+		self.line = []
 
 		#运行速度
 		self.speed = 0
@@ -199,7 +268,7 @@ class Route:
 
 	@staticmethod
 	def test():
-		route = Route(route=[Route(source=(0, 0), target=(0, 1), speed=1), Route(source=(0, 1), target=(1, 1), speed=1)])
+		route = Route(line=[Line(source=(0, 0), target=(0, 1)), Line(source=(0, 1), target=(1, 1))], speed=1)
 
 
 class Object(Base):
