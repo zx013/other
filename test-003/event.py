@@ -104,43 +104,20 @@ class Base:
 			attr = self._wrap_event(attr)
 
 
-
-class Line:
-	def __init__(self, **kwargs):
-		#类型，圆弧arc，直线line
-		self.type = kwargs.get('type', 'line') == 'line'
-
-		#源点
-		self.source = kwargs.get('source', (0, 0))
-
-		#目标点
-		self.target = kwargs.get('target', (0, 0))
-
-		#中间点
-		self.middle = kwargs.get('middle', (0, 0))
-
-		if not type:
-			#圆弧的圆心，定义了则用定义的，没定义则用middle计算
-			if kwargs.has_key('center'):
-				self.center = kwargs['center']
-			else:
-				self.center = Map.circle_center(self.source, self.target, self.middle)
-			#半径
-			self.radius = Map.distance(self.source, self.center)
-
-class Map:
+#几何图形的相关计算
+class Geometry:
 	#计算投影距离
 	@staticmethod
 	def shadow(pos1, pos2):
-		x1, y1 = pos1
-		x2, y2 = pos2
+		x1, y1 = map(float, pos1)
+		x2, y2 = map(float, pos2)
 		return abs(x2 - x1), abs(y2 - y1)
 
 	#计算两点距离
 	@staticmethod
 	def distance(pos1, pos2):
-		x1, y1 = pos1
-		x2, y2 = pos2
+		x1, y1 = map(float, pos1)
+		x2, y2 = map(float, pos2)
 		return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
 	#三点求圆，三点在同一条线上返回None
@@ -177,7 +154,7 @@ class Map:
 
 	#两条线交点，平行返回None
 	@staticmethod
-	def intersect_point(line1, line2):
+	def intersect_line(line1, line2):
 		x11, y11 = map(float, line1.source)
 		x12, y12 = map(float, line1.target)
 		x21, y21 = map(float, line2.source)
@@ -194,6 +171,47 @@ class Map:
 		x = (a * f - d * c) / g
 		y = (b * f - e * c) / g
 		return x, y
+
+	#线和弧的交点
+	@staticmethod
+	def intersect_arc(line1, arc2):
+		x11, y11 = map(float, line1.source)
+		x12, y12 = map(float, line1.target)
+		x21, y21 = map(float, arc2.source)
+		x22, y22 = map(float, arc2.target)
+	
+
+	def intersect(wire1, wire2):
+		pass
+
+#线段
+class Line:
+	def __init__(self, **kwargs):
+		#源点
+		self.source = kwargs.get('source', (0, 0))
+
+		#目标点
+		self.target = kwargs.get('target', (0, 0))
+
+#弧
+class Arc:
+	def __init__(self, **kwargs):
+		#源点
+		self.source = kwargs.get('source', (0, 0))
+
+		#目标点
+		self.target = kwargs.get('target', (0, 0))
+
+		#圆弧的圆心，定义了则用定义的，没定义则用middle计算
+		if kwargs.has_key('center'):
+			self.center = kwargs['center']
+		else:
+			#中间点
+			self.middle = kwargs.get('middle', (0, 0))
+			self.center = Geometry.circle_center(self.source, self.target, self.middle)
+		#半径
+		self.radius = Geometry.distance(self.source, self.center)
+
 
 #描述物体的形状
 class Shape:
@@ -219,12 +237,12 @@ class Shape:
 	def collide(self, shape):
 		#圆形和矩形碰撞视为两个矩形的碰撞
 		if self.type == 'circle' and shape.type == 'circle':
-			distance = Map.distance(self.pos, shape.pos)
+			distance = Geometry.distance(self.pos, shape.pos)
 			if self.radius + shape.radius >= distance:
 				return True
 			return False
 		else:
-			x, y = Map.shadow(self.pos, shape.pos)
+			x, y = Geometry.shadow(self.pos, shape.pos)
 			if self.width + shape.width >= 2 * x and self.height + shape.height >= 2 * y:
 				return True
 			return False
