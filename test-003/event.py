@@ -195,6 +195,9 @@ class Line:
 
 #弧
 class Arc:
+	#源点，目标点，中间点
+	#源点，目标点，圆心点
+	#圆心点，方向，角度，半径
 	def __init__(self, **kwargs):
 		#源点
 		self.source = kwargs.get('source', (0, 0))
@@ -202,15 +205,22 @@ class Arc:
 		#目标点
 		self.target = kwargs.get('target', (0, 0))
 
-		#圆弧的圆心，定义了则用定义的，没定义则用middle计算
+		#圆弧的圆心，圆心点，中间点，半径，展开角
 		if kwargs.has_key('center'):
 			self.center = kwargs['center']
 		else:
 			#中间点
 			self.middle = kwargs.get('middle', (0, 0))
 			self.center = Geometry.circle_center(self.source, self.target, self.middle)
+
 		#半径
 		self.radius = Geometry.distance(self.source, self.center)
+
+		#角度
+		self.angle ＝ 0
+		
+		#方向
+		self.direct = 0
 
 
 #描述物体的形状
