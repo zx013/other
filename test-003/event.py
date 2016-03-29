@@ -191,86 +191,65 @@ class Geometry:
 #矩形
 class Rect:
 	def __init__(self, **kwargs):
-		#方向
+		#位置，相对坐标
+		self.pos = kwargs.get('pos', (0, 0))
+
+		#方向，相对坐标
 		self.direct = kwargs.get('direct', 0)
-		
+
 		#宽度
 		self.width = kwargs.get('width', 0)
-		
+
 		#高度
 		self.height = kwargs.get('height', 0)
 
 #扇形
 class Sector:
 	def __init__(self, **kwargs):
-		#方向
+		#位置，相对坐标
+		self.pos = kwargs.get('pos', (0, 0))
+
+		#方向，相对坐标
 		self.direct = kwargs.get('direct', 0)
-		
+
 		#半径
 		self.radius = kwargs.get('radius', 0)
 
 		#角度
 		self.angle = kwargs.get('angle', 0)
-		
+
 		self.center = (0, 0)
 
 
 #描述物体的形状
 class Shape:
 	def __init__(self, **kwargs):
-		#形状，圆形circle，矩形rectangle，扇形sector
-		self.type = kwargs.get('type', 'circle')
+		#形状组成，由扇形和矩形组成
+		self.compose = []
 
-		#半径
-		self.radius = kwargs.get('radius', 0)
-
-		#长宽，圆形长宽设置为直径
-		if self.type in ('circle', 'sector'):
-			self.width = 2 * self.radius
-			self.height = 2 * self.radius
-		else:
-			self.width = kwargs.get('width', 0)
-			self.height = kwargs.get('height', 0)
-
-		#位置
+		#位置，地图坐标
 		self.pos = kwargs.get('pos', (0, 0))
+
+		#方向，地图坐标
+		self.direct = kwargs.get('direct', 0)
 
 	#判断两个形状是否碰撞
 	def collide(self, shape):
-		#圆形和矩形碰撞视为两个矩形的碰撞
-		if self.type == 'circle' and shape.type == 'circle':
-			distance = Geometry.distance(self.pos, shape.pos)
-			if self.radius + shape.radius >= distance:
-				return True
-			return False
-		else:
-			x, y = Geometry.shadow(self.pos, shape.pos)
-			if self.width + shape.width >= 2 * x and self.height + shape.height >= 2 * y:
-				return True
-			return False
-		return False
+		for c1 in self.compose:
+			for c2 in shape.compose:
 
 	@staticmethod
 	def test():
-		s1 = Shape(type='circle', radius=2, pos=(0, 3))
-		s2 = Shape(type='circle', radius=3, pos=(3, 0))
-		s3 = Shape(type='circle', radius=0.9, pos=(3, 3))
-		print s1.collide(s2)
-		print s1.collide(s3)
-		print s2.collide(s3)
-
-		s1 = Shape(type='rectangle', width=4, height=4, pos=(0, 3))
-		s2 = Shape(type='rectangle', width=2, height=4, pos=(3, 0))
-		s3 = Shape(type='rectangle', width=1.9, height=1.9, pos=(3, 3))
-		print s1.collide(s2)
-		print s1.collide(s3)
-		print s2.collide(s3)
+		pass
 
 
 #线段
 class Line:
 	def __init__(self, **kwargs):
-		#方向
+		#位置，相对坐标
+		self.pos = kwargs.get('pos', (0, 0))
+
+		#方向，相对坐标
 		self.direct = kwargs.get('direct', 0)
 
 		#长度
@@ -285,7 +264,10 @@ class Line:
 #弧
 class Arc:
 	def __init__(self, **kwargs):
-		#方向
+		#位置，相对坐标
+		self.pos = kwargs.get('pos', (0, 0))
+
+		#方向，相对坐标
 		self.direct = kwargs.get('direct', 0)
 
 		#长度
