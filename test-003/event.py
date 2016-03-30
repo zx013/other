@@ -104,28 +104,43 @@ class Base:
 			attr = self._wrap_event(attr)
 
 
+
+import math
+
 #几何图形的相关计算
 class Geometry:
+	@staticmethod
+	def radian(angle):
+		return angle * math.pi / 180
+
+	@staticmethod
+	def sin(angle):
+		return math.sin(Geometry.radian(angle))
+
+	@staticmethod
+	def cos(angle):
+		return math.cos(Geometry.radian(angle))
+
 	#计算投影距离
 	@staticmethod
 	def shadow(pos1, pos2):
-		x1, y1 = map(float, pos1)
-		x2, y2 = map(float, pos2)
+		x1, y1 = pos1
+		x2, y2 = pos2
 		return abs(x2 - x1), abs(y2 - y1)
 
 	#计算两点距离
 	@staticmethod
 	def distance(pos1, pos2):
-		x1, y1 = map(float, pos1)
-		x2, y2 = map(float, pos2)
+		x1, y1 = pos1
+		x2, y2 = pos2
 		return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
 	#三点求圆，三点在同一条线上返回None
 	@staticmethod
 	def circle_center(pos1, pos2, pos3):
-		x1, y1 = map(float, pos1)
-		x2, y2 = map(float, pos2)
-		x3, y3 = map(float, pos3)
+		x1, y1 = pos1
+		x2, y2 = pos2
+		x3, y3 = pos3
 		if pos1 == pos2 == pos3:
 			x = x1
 			y = y1
@@ -157,10 +172,10 @@ class Geometry:
 	#两条线交点，平行返回None
 	@staticmethod
 	def intersect_line(line1, line2):
-		x11, y11 = map(float, line1.source)
-		x12, y12 = map(float, line1.target)
-		x21, y21 = map(float, line2.source)
-		x22, y22 = map(float, line2.target)
+		x11, y11 = line1.source
+		x12, y12 = line1.target
+		x21, y21 = line2.source
+		x22, y22 = line2.target
 		a = x11 - x12
 		b = y11 - y12
 		c = x11 * y12 - x12 * y11
@@ -179,29 +194,71 @@ class Geometry:
 	#线和弧的交点
 	@staticmethod
 	def intersect_arc(line1, arc2):
-		x11, y11 = map(float, line1.source)
-		x12, y12 = map(float, line1.target)
-		x21, y21 = map(float, arc2.source)
-		x22, y22 = map(float, arc2.target)
+		x11, y11 = line1.source
+		x12, y12 = line1.target
+		x21, y21 = arc2.source
+		x22, y22 = arc2.target
 
 
 	def intersect(wire1, wire2):
 		pass
 
-#矩形
-class Rect:
+#相对坐标的一些操作
+class Coordinate(object):
 	def __init__(self, **kwargs):
-		#位置，相对坐标
-		self.pos = kwargs.get('pos', (0, 0))
+		pos = kwargs.get('pos', (0, 0))
+		self.set_pos(pos)
 
-		#方向，相对坐标
-		self.direct = kwargs.get('direct', 0)
+		direct = kwargs.get('direct', 0)
+		self.set_direct(direct)
+		
+		#在地图上的位置，用于计算
+		self.temp_pos = self.pos
+		self.temp_direct = self.direct
+
+	#位置，相对坐标
+	def set_pos(self, pos):
+		self.pos = pos
+		self.x, self.y = self.pos
+	
+	#方向，相对坐标
+	def set_direct(self, direct):
+		self.direct = direct
+		self.direct_sin = -Geometry.sin(self.direct)
+		self.direct_cos = Geometry.cos(self.direct)
+	
+	#经过pos, direct移动旋转后pos的位置
+	def rotate(self, pos):
+		x, y = pos
+		rotate_x = x * self.direct_cos - y * self.direct_sin + self.x
+		rotate_y = x * self.direct_sin + y * self.direct_cos + self.y
+		return rotate_x, rotate_y
+
+
+#矩形，以矩形下底边中点为原点，绕原点旋转direct，移动pos后得到
+class Rect(Coordinate):
+	def __init__(self, **kwargs):
+		super(Rect, self).__init__(**kwargs)
 
 		#宽度
 		self.width = kwargs.get('width', 0)
 
 		#高度
 		self.height = kwargs.get('height', 0)
+
+		#包络圆心
+		self.wrap_center = (0, self.height / 2)
+
+		#包络半径
+		self.wrap_radius = Geometry.distance(self.wrap_center, (self.width / 2, 0))
+
+	@staticmethod
+	def test():
+		r = Rect(width=2.0, height=4.0)
+		print r.wrap_center, r.wrap_radius
+		r.set_pos((1, 0))
+		r.set_direct(45)
+		print r.rotate(r.wrap_center)
 
 #扇形
 class Sector:
@@ -218,7 +275,30 @@ class Sector:
 		#角度
 		self.angle = kwargs.get('angle', 0)
 
+		#圆心
 		self.center = (0, 0)
+
+		x = Geometry.sin(self.angle / 2) * self.radius
+		y = Geometry.cos(self.angle / 2) * self.radius
+
+		self.source = x, y
+		self.target = -x, y
+
+		#包络圆心，包络半径
+		if self.angle < 180:
+			self.wrap_center = Geometry.circle_center(self.source, self.target, self.center)
+			self.wrap_radius = Geometry.distance(self.wrap_center, self.center)
+		else:
+			self.wrap_center = self.center
+			self.wrap_radius = self.radius
+
+		wrap_x = Geometry.sin(self.direct) * self.wrap_radius
+		wrap_y = Geometry.cos(self.direct) * self.wrap_radius
+
+		self.wrap_pos = wrap_x, wrap_y
+
+		self.temp_pos = self.pos
+		self.temp_direct = self.direct
 
 
 #描述物体的形状
@@ -228,15 +308,39 @@ class Shape:
 		self.compose = []
 
 		#位置，地图坐标
-		self.pos = kwargs.get('pos', (0, 0))
+		pos = kwargs.get('pos', (0, 0))
+		self.set_pos(pos)
 
 		#方向，地图坐标
-		self.direct = kwargs.get('direct', 0)
+		direct = kwargs.get('direct', 0)
+		self.set_direct(direct)
 
-	#判断两个形状是否碰撞
+	def set_pos(self, pos):
+		self.pos = pos
+		for c in self.compose:
+			x1, y1 = self.pos
+			x2, y2 = c.pos
+			c.temp_pos = x1 + x2, y1 + y2
+
+	def set_direct(self, direct):
+		self.direct = direct
+		for c in self.compose:
+			c.temp_direct = self.direct + c.temp_direct
+
+	#快速碰撞
+	def wrap_collide(self, shape):
+		for c1 in self.compose:
+			for c2 in shape.compose:
+				distance = Geometry.distance(c1.temp_pos, c2.temp_pos)
+				if distance >= c1.wrap_radius + c2.wrap_radius:
+					return True
+		return False
+
+	#常规碰撞
 	def collide(self, shape):
 		for c1 in self.compose:
 			for c2 in shape.compose:
+				pass
 
 	@staticmethod
 	def test():
@@ -412,6 +516,7 @@ def main():
 	o.delete_buffer(buf3)
 	print [b.create_time for b in o.point_buffer]
 	Shape.test()
+	Rect.test()
 	return o
 
 
