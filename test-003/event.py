@@ -203,7 +203,7 @@ class Geometry:
 	def intersect(wire1, wire2):
 		pass
 
-#相对坐标的一些操作
+#相对坐标的一些操作，绕原点旋转direct，移动pos后得到
 class Coordinate(object):
 	def __init__(self, **kwargs):
 		pos = kwargs.get('pos', (0, 0))
@@ -224,18 +224,18 @@ class Coordinate(object):
 	#方向，相对坐标
 	def set_direct(self, direct):
 		self.direct = direct
-		self.direct_sin = -Geometry.sin(self.direct)
+		self.direct_sin = Geometry.sin(self.direct)
 		self.direct_cos = Geometry.cos(self.direct)
 	
 	#经过pos, direct移动旋转后pos的位置
 	def rotate(self, pos):
 		x, y = pos
-		rotate_x = x * self.direct_cos - y * self.direct_sin + self.x
-		rotate_y = x * self.direct_sin + y * self.direct_cos + self.y
+		rotate_x = y * self.direct_sin + x * self.direct_cos + self.x
+		rotate_y = y * self.direct_cos - x * self.direct_sin + self.y
 		return rotate_x, rotate_y
 
 
-#矩形，以矩形下底边中点为原点，绕原点旋转direct，移动pos后得到
+#矩形，以矩形下底边中点为原点
 class Rect(Coordinate):
 	def __init__(self, **kwargs):
 		super(Rect, self).__init__(**kwargs)
@@ -254,20 +254,15 @@ class Rect(Coordinate):
 
 	@staticmethod
 	def test():
-		r = Rect(width=2.0, height=4.0)
+		r = Rect(pos=(1, 1), width=2.0, height=4.0)
 		print r.wrap_center, r.wrap_radius
-		r.set_pos((1, 0))
 		r.set_direct(45)
 		print r.rotate(r.wrap_center)
 
-#扇形
-class Sector:
+#扇形，以圆心为原点
+class Sector(Coordinate):
 	def __init__(self, **kwargs):
-		#位置，相对坐标
-		self.pos = kwargs.get('pos', (0, 0))
-
-		#方向，相对坐标
-		self.direct = kwargs.get('direct', 0)
+		super(Sector, self).__init__(**kwargs)
 
 		#半径
 		self.radius = kwargs.get('radius', 0)
@@ -284,21 +279,21 @@ class Sector:
 		self.source = x, y
 		self.target = -x, y
 
-		#包络圆心，包络半径
-		if self.angle < 180:
+		#外切圆心，外切半径
+		if self.angle < 90: #三点求圆
 			self.wrap_center = Geometry.circle_center(self.source, self.target, self.center)
 			self.wrap_radius = Geometry.distance(self.wrap_center, self.center)
-		else:
+		elif self.angle < 180: #两侧点中点
+			self.wrap_center = (0, y)
+			self.wrap_radius = x
+		else: #所在的圆
 			self.wrap_center = self.center
 			self.wrap_radius = self.radius
-
-		wrap_x = Geometry.sin(self.direct) * self.wrap_radius
-		wrap_y = Geometry.cos(self.direct) * self.wrap_radius
-
-		self.wrap_pos = wrap_x, wrap_y
-
-		self.temp_pos = self.pos
-		self.temp_direct = self.direct
+	
+	@staticmethod
+	def test():
+		s = Sector(radius=2, angle=90)
+		print s.source, s.target, s.wrap_center, s.wrap_radius
 
 
 #描述物体的形状
@@ -517,6 +512,7 @@ def main():
 	print [b.create_time for b in o.point_buffer]
 	Shape.test()
 	Rect.test()
+	Sector.test()
 	return o
 
 
