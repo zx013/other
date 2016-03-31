@@ -26,8 +26,16 @@
 
 
 import time
+import itertools
 
+#时间，单位都为毫秒，sleep最小支持1ms，误差1-2%
 class Time:
+	#间隔，每次运行时间
+	interval = 10
+
+	#频率，每秒运行次数
+	frequency = 1000 / interval
+
 	@staticmethod
 	def clock():
 		return int(time.time() * 1000)
@@ -36,6 +44,9 @@ class Time:
 	def sleep(tm):
 		time.sleep(tm / 1000.0)
 
+	@staticmethod
+	def through():
+		return itertools.count(0)
 
 
 class Event:
@@ -128,6 +139,7 @@ class Geometry:
 		x2, y2 = pos2
 		return abs(x2 - x1), abs(y2 - y1)
 
+	#可用缓存
 	#计算两点距离
 	@staticmethod
 	def distance(pos1, pos2):
@@ -199,9 +211,18 @@ class Geometry:
 		x21, y21 = arc2.source
 		x22, y22 = arc2.target
 
-
-	def intersect(wire1, wire2):
-		pass
+	#旋转，点沿着圆心顺时针旋转了一小段距离
+	@staticmethod
+	def rotate(pos, center, step):
+		x, y = pos
+		rx, ry = center
+		radius = Geometry.distance(pos, center) #用缓存避免重复计算
+		direct = step / radius
+		sin = math.sin(direct)
+		cos = math.cos(direct)
+		rotate_x = (y - ry) * sin + (x - rx) * cos + rx
+		rotate_y = (y - ry) * cos - (x - rx) * sin + ry
+		return rotate_x, rotate_y
 
 #相对坐标的一些操作，绕原点旋转direct，移动pos后得到
 class Coordinate(object):
@@ -238,10 +259,10 @@ class Rect(Coordinate):
 		super(Rect, self).__init__(**kwargs)
 
 		#宽度
-		self.width = kwargs.get('width', 0)
+		self.width = kwargs['width']
 
 		#高度
-		self.height = kwargs.get('height', 0)
+		self.height = kwargs['height']
 
 		#包络圆心
 		self.wrap_center = (0, self.height / 2)
@@ -263,10 +284,13 @@ class Sector(Coordinate):
 		super(Sector, self).__init__(**kwargs)
 
 		#半径
-		self.radius = kwargs.get('radius', 0)
+		self.radius = kwargs['radius']
 
 		#角度
-		self.angle = kwargs.get('angle', 0)
+		self.angle = kwargs.get('angle', 90)
+		
+		#从半径中切除的部分，以实现扇形
+		self.slice = kwargs.get('slice', 0)
 
 		#圆心
 		self.center = (0, 0)
@@ -306,7 +330,7 @@ class Shape(Coordinate):
 	def wrap_collide(self, shape):
 		for c1 in self.compose:
 			for c2 in shape.compose:
-				r1 = c1.rotate(c1.wrap_center, self)
+				r1 = c1.rotate(c1.wrap_center, self) #用缓存避免重复计算
 				r2 = c2.rotate(c2.wrap_center, shape)
 				distance = Geometry.distance(r1, r2)
 				if distance < c1.wrap_radius + c2.wrap_radius:
@@ -320,6 +344,7 @@ class Shape(Coordinate):
 		for c1 in self.compose:
 			for c2 in shape.compose:
 				pass
+		return True
 
 	@staticmethod
 	def test():
@@ -330,14 +355,50 @@ class Shape(Coordinate):
 		print s1.wrap_collide(s2)
 
 
-#线段
-class Line:
-	def __init__(self, **kwargs):
-		#位置，相对坐标
-		self.pos = kwargs.get('pos', (0, 0))
+#物体沿着轨迹运动
+#高速物体碰撞判断方法（移动速度超过最大外接圆半径）
+#每步一帧，移动一小段距离，速度快则帧数多，速度慢则帧数少（至少保证一个时间片一帧）
+#每一个时间片运行若干帧数据，每一帧都进行碰撞检测
+#A高速移动，形成A1，A2，A3等帧
+#B高速移动，形成B1，B2等帧
+#A，B碰撞则为A1，A2，A3与B1，B2的碰撞
+class Motion(object):
+	#两帧之间最大移动距离
+	frame_move = 2
 
-		#方向，相对坐标
-		self.direct = kwargs.get('direct', 0)
+	def __init__(self, **kwargs):
+		#speed，每个时间片运行速度
+		speed = kwargs.get('speed', lambda t: 0)
+		self.speed = lambda t: speed(t / Time.frequency) / Time.frequency
+
+		#time，运行的总时间片数，匀速运动
+		self.time = kwargs.get('time', 0)
+
+		#是否周期
+		self.cycle = kwargs.get('cycle', False)
+
+	def run(self):
+		t = Time.through()
+		slice_pos = self.source #时间片起点时的位置
+		residual_distance = self.distance #剩余长度
+		while True:
+			speed = self.velocity(t.next()) #每个时间片的运行速度
+			#每一帧物体所在的点，可正可负
+			frame_pos = []
+			for step in xrange(0, int(abs(speed)), self.frame_move if speed > 0 else -self.frame_move):
+				if abs(step) < residual_distance: #移动距离大于每帧步长的点，直接跳出
+					break
+				frame_pos.append(self.step(slice_pos, step))
+			yield frame_pos
+			if abs(speed) < residual_distance:
+				break
+			slice_pos = self.step(slice_pos, speed) #移动speed距离
+			residual_distance -= speed
+
+#线段
+class Line(Coordinate):
+	def __init__(self, **kwargs):
+		super(Line, self).__init__(**kwargs)
 
 		#长度
 		self.length = kwargs.get('length', 0)
@@ -348,14 +409,16 @@ class Line:
 		#目标点
 		self.target = (0, self.length)
 
-#弧
-class Arc:
-	def __init__(self, **kwargs):
-		#位置，相对坐标
-		self.pos = kwargs.get('pos', (0, 0))
+		#距离
+		self.distance = self.length
 
-		#方向，相对坐标
-		self.direct = kwargs.get('direct', 0)
+	def step(self):
+		pass
+
+#弧
+class Arc(Coordinate):
+	def __init__(self, **kwargs):
+		super(Arc, self).__init__(**kwargs)
 
 		#长度
 		self.length = kwargs.get('length', 0)
@@ -374,6 +437,12 @@ class Arc:
 
 		#半径
 		self.radius = Geometry.distance(self.source, self.center)
+
+		#角度
+		#self.angle = kwargs.get('angle', 0)
+
+		#距离
+		#self.distance = self.length
 
 
 #描述移动的轨迹
