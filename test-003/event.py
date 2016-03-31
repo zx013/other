@@ -368,8 +368,11 @@ class Motion(object):
 
 	def __init__(self, **kwargs):
 		#speed，每个时间片运行速度
-		speed = kwargs.get('speed', lambda t: 0)
-		self.speed = lambda t: speed(t / Time.frequency) / Time.frequency
+		speed = kwargs.get('speed', 0)
+		if hasattr(speed, '__call__'):
+			self.speed = lambda t: speed(t / Time.frequency) / Time.frequency
+		else:
+			self.speed = lambda t: speed / Time.frequency
 
 		#time，运行的总时间片数，匀速运动
 		self.time = kwargs.get('time', 0)
@@ -382,23 +385,26 @@ class Motion(object):
 		slice_pos = self.source #时间片起点时的位置
 		residual_distance = self.distance #剩余长度
 		while True:
-			speed = self.velocity(t.next()) #每个时间片的运行速度
+			speed = self.speed(t.next()) #每个时间片的运行速度
 			#每一帧物体所在的点，可正可负
-			frame_pos = []
+			frame_pos = [slice_pos]
 			for step in xrange(0, int(abs(speed)), self.frame_move if speed > 0 else -self.frame_move):
-				if abs(step) < residual_distance: #移动距离大于每帧步长的点，直接跳出
+				if not step: #第一个为slice_pos，若speed小于1，xrange结果为空
+					continue
+				if abs(step) > residual_distance: #移动距离大于每帧步长的点，直接跳出
 					break
 				frame_pos.append(self.step(slice_pos, step))
 			yield frame_pos
-			if abs(speed) < residual_distance:
+			if abs(speed) > residual_distance:
 				break
 			slice_pos = self.step(slice_pos, speed) #移动speed距离
 			residual_distance -= speed
 
 #线段
-class Line(Coordinate):
+class Line(Coordinate, Motion):
 	def __init__(self, **kwargs):
-		super(Line, self).__init__(**kwargs)
+		Coordinate.__init__(self, **kwargs)
+		Motion.__init__(self, **kwargs)
 
 		#长度
 		self.length = kwargs.get('length', 0)
@@ -412,8 +418,16 @@ class Line(Coordinate):
 		#距离
 		self.distance = self.length
 
-	def step(self):
-		pass
+	def step(self, pos, step):
+		x, y = pos
+		return x, y + step
+
+	@staticmethod
+	def test():
+		l = Line(length=20.0, speed=500.0)
+		g = l.run()
+		for p in g:
+			print p
 
 #弧
 class Arc(Coordinate):
@@ -540,38 +554,42 @@ class Buffer:
 
 		#创建时间
 		self.create_time = Time.clock()
+	
+	@staticmethod
+	def test():
+		o = Object()
+		o.wrap_interface()
+		o.wrap_event()
+		o.set_property('a', 1)
+		print o.get_property('a')
+		print o.get_attribute('a', 2)
+		
+		buf1 = o.create_buffer()
+		buf1.priority_level = 0
+		o.insert_buffer(buf1)
+		Time.sleep(10)
+		buf2 = o.create_buffer()
+		buf2.priority_level = 3
+		o.insert_buffer(buf2)
+		Time.sleep(10)
+		buf3 = o.create_buffer()
+		buf3.priority_level = 3
+		o.insert_buffer(buf3)
+		Time.sleep(10)
+		buf4 = o.create_buffer()
+		buf4.priority_level = 0
+		o.insert_buffer(buf4)
+		o.delete_buffer(buf3)
+		print [b.create_time for b in o.point_buffer]
 
 
 
 def main():
-	o = Object()
-	o.wrap_interface()
-	o.wrap_event()
-	o.set_property('a', 1)
-	print o.get_property('a')
-	print o.get_attribute('a', 2)
-	buf1 = o.create_buffer()
-	buf1.priority_level = 0
-	o.insert_buffer(buf1)
-	Time.sleep(10)
-	buf2 = o.create_buffer()
-	buf2.priority_level = 3
-	o.insert_buffer(buf2)
-	Time.sleep(10)
-	buf3 = o.create_buffer()
-	buf3.priority_level = 3
-	o.insert_buffer(buf3)
-	Time.sleep(10)
-	buf4 = o.create_buffer()
-	buf4.priority_level = 0
-	o.insert_buffer(buf4)
-	o.delete_buffer(buf3)
-	print [b.create_time for b in o.point_buffer]
+	Buffer.test()
 	Shape.test()
 	Rect.test()
 	Sector.test()
-	return o
-
+	Line.test()
 
 
 if __name__ == '__main__':
