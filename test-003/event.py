@@ -36,16 +36,35 @@ def testmethod(fun):
 	return run
 
 
+#封装的函数为递归式与非递归式，递归式由上一次状态计算得出，非递归式则直接算出
+#类成员在使用时会随时间片实时改变，其中改变分为内部或外部改变
+#不能够被改变的成员无需改动，直接使用即可
+#能够被改变的成员必需封装到lambda中，用函数调用形式使用
+#外部改变时，递归式只需改变递归值即可，非递归式则需再次封装一层，两者实现的效果不同
 class Lambda:
-	def __init__(self, func, input=lambda x: x, output=lambda x: x):
+	def __init__(self, func, input=lambda x: x, output=lambda x: x, **kwargs):
+		#recurse为递归初值，未设置则视为非递归
+		if kwargs.has_key('recurse'):
+			self.recurse = kwargs['recurse']
+
 		if hasattr(func, '__call__'):
-			self.func = lambda x: output(func(input(x)))
+			self.func = lambda *args, **kwargs: output(func(input(*args, **kwargs)))
 		else:
-			self.func = lambda x: output(func)
+			self.func = lambda *args, **kwargs: output(func)
 
 	def __call__(self, *args, **kwargs):
-		return self.func(*args, **kwargs)
-
+		if hasattr(self, 'recurse'):
+			self.recurse = self.func(self.recurse, *args, **kwargs)
+			return self.recurse
+		else:
+			return self.func(*args, **kwargs)
+	
+	@testmethod
+	def test(self):
+		a1 = Lambda(1, recurse=2)
+		print a1(), a1(), a1()
+		a2 = Lambda(lambda x: x + 1, recurse=2)
+		print a2(), a2(), a2()
 
 
 import time
@@ -660,6 +679,7 @@ class Buffer:
 
 
 def main():
+	Lambda.test()
 	Buffer.test()
 	Rect.test()
 	Sector.test()
