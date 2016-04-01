@@ -25,6 +25,16 @@
 #OBJECT和其它OBJECT关联，该OBJECT主动碰撞时影响到关联OBJECT
 
 
+def testmethod(fun):
+	def run(self, *args, **kwargs):
+		print '%s: INIT' % self.__name__
+		result = fun(self, *args, **kwargs)
+		print '%s: DESTROY' % self.__name__
+		return result
+	run = classmethod(run)
+	return run
+
+
 import time
 import itertools
 
@@ -120,9 +130,15 @@ import math
 
 #几何图形的相关计算
 class Geometry:
+	#角度转换为弧度
 	@staticmethod
 	def radian(angle):
 		return angle * math.pi / 180
+	
+	#弧度转换为角度
+	@staticmethod
+	def angle(radian):
+		return radian * 180 / math.pi
 
 	@staticmethod
 	def sin(angle):
@@ -131,7 +147,15 @@ class Geometry:
 	@staticmethod
 	def cos(angle):
 		return math.cos(Geometry.radian(angle))
-
+	
+	@staticmethod
+	def asin(ratio):
+		return Geometry.angle(math.asin(ratio))
+		
+	@staticmethod
+	def acos(ratio):
+		return Geometry.angle(math.acos(ratio))
+		
 	#计算投影距离
 	@staticmethod
 	def shadow(pos1, pos2):
@@ -256,7 +280,7 @@ class Coordinate(object):
 #矩形，以矩形下底边中点为原点
 class Rect(Coordinate):
 	def __init__(self, **kwargs):
-		super(Rect, self).__init__(**kwargs)
+		Coordinate.__init__(self, **kwargs)
 
 		#宽度
 		self.width = kwargs['width']
@@ -270,8 +294,8 @@ class Rect(Coordinate):
 		#包络半径
 		self.wrap_radius = Geometry.distance(self.wrap_center, (self.width / 2, 0))
 
-	@staticmethod
-	def test():
+	@testmethod
+	def test(self):
 		r = Rect(pos=(1.0, 1.0), width=2.0, height=4.0)
 		print r.wrap_center, r.wrap_radius
 		r.set_direct(45.0)
@@ -281,7 +305,7 @@ class Rect(Coordinate):
 #扇形，以圆心为原点
 class Sector(Coordinate):
 	def __init__(self, **kwargs):
-		super(Sector, self).__init__(**kwargs)
+		Coordinate.__init__(self, **kwargs)
 
 		#半径
 		self.radius = kwargs['radius']
@@ -312,8 +336,8 @@ class Sector(Coordinate):
 			self.wrap_center = self.center
 			self.wrap_radius = self.radius
 
-	@staticmethod
-	def test():
+	@testmethod
+	def test(self):
 		s = Sector(radius=2.0, angle=90.0)
 		print s.wrap_center, s.wrap_radius
 
@@ -321,7 +345,7 @@ class Sector(Coordinate):
 #描述物体的形状
 class Shape(Coordinate):
 	def __init__(self, **kwargs):
-		super(Shape, self).__init__(**kwargs)
+		Coordinate.__init__(self, **kwargs)
 
 		#形状组成，由扇形和矩形组成
 		self.compose = kwargs.get('compose', [])
@@ -346,8 +370,8 @@ class Shape(Coordinate):
 				pass
 		return True
 
-	@staticmethod
-	def test():
+	@testmethod
+	def test(self):
 		s1 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 0.0), direct=0.0)
 		s2 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 5.0), direct=0.0)
 		print s1.wrap_collide(s2)
@@ -378,27 +402,29 @@ class Motion(object):
 		self.time = kwargs.get('time', 0)
 
 		#是否周期
-		self.cycle = kwargs.get('cycle', False)
+		self.cycle = kwargs.get('cycle', 1)
 
-	def run(self):
+	def move(self):
 		t = Time.through()
-		slice_pos = self.source #时间片起点时的位置
-		residual_distance = self.distance #剩余长度
-		while True:
-			speed = self.speed(t.next()) #每个时间片的运行速度
-			#每一帧物体所在的点，可正可负
-			frame_pos = [slice_pos]
-			for step in xrange(0, int(abs(speed)), self.frame_move if speed > 0 else -self.frame_move):
-				if not step: #第一个为slice_pos，若speed小于1，xrange结果为空
-					continue
-				if abs(step) > residual_distance: #移动距离大于每帧步长的点，直接跳出
+		for c in xrange(self.cycle):
+			slice_pos = self.source #时间片起点时的位置
+			residual_distance = self.distance #剩余长度
+			while True:
+				speed = self.speed(t.next()) #每个时间片的运行速度
+				#每一帧物体所在的点，可正可负
+				frame_pos = [slice_pos]
+				move = self.frame_move if speed > 0 else -self.frame_move
+				for step in xrange(0, int(abs(speed)), move):
+					if not step: #第一个为slice_pos，若speed小于1，xrange结果为空
+						continue
+					if abs(step) > residual_distance: #移动距离大于每帧步长的点，直接跳出
+						break
+					frame_pos.append(self.step(slice_pos, step))
+				yield frame_pos
+				if abs(speed) > residual_distance:
 					break
-				frame_pos.append(self.step(slice_pos, step))
-			yield frame_pos
-			if abs(speed) > residual_distance:
-				break
-			slice_pos = self.step(slice_pos, speed) #移动speed距离
-			residual_distance -= speed
+				slice_pos = self.step(slice_pos, speed) #移动speed距离
+				residual_distance -= speed
 
 #线段
 class Line(Coordinate, Motion):
@@ -407,7 +433,7 @@ class Line(Coordinate, Motion):
 		Motion.__init__(self, **kwargs)
 
 		#长度
-		self.length = kwargs.get('length', 0)
+		self.length = kwargs['length']
 
 		#源点
 		self.source = (0, 0)
@@ -422,23 +448,25 @@ class Line(Coordinate, Motion):
 		x, y = pos
 		return x, y + step
 
-	@staticmethod
-	def test():
-		l = Line(length=20.0, speed=500.0)
-		g = l.run()
+	@testmethod
+	def test(self):
+		l = Line(length=20.0, speed=500.0, cycle=2)
+		g = l.move()
 		for p in g:
 			print p
 
 #弧
-class Arc(Coordinate):
+class Arc(Coordinate, Motion):
 	def __init__(self, **kwargs):
-		super(Arc, self).__init__(**kwargs)
+		Coordinate.__init__(self, **kwargs)
+		Motion.__init__(self, **kwargs)
 
 		#长度
-		self.length = kwargs.get('length', 0)
+		self.length = kwargs['length']
 
-		#中间点
-		self.middle = kwargs.get('middle', (0, 0))
+		middle = kwargs['middle']
+		#中间点，middle=0是为圆
+		self.middle = (middle, self.length / 2)
 
 		#源点
 		self.source = (0, 0)
@@ -447,16 +475,31 @@ class Arc(Coordinate):
 		self.target = (0, self.length)
 
 		#圆弧的圆心
-		self.center = Geometry.circle_center(self.source, self.target, self.middle)
+		if middle:
+			self.center = Geometry.circle_center(self.source, self.target, self.middle)
+		else:
+			self.center = self.middle
 
 		#半径
 		self.radius = Geometry.distance(self.source, self.center)
 
 		#角度
-		#self.angle = kwargs.get('angle', 0)
-
+		center_x, center_y = self.center
+		
+		if middle > 0:
+			self.angle = 360 - 2 * Geometry.acos(center_x / self.radius)
+		elif middle < 0:
+			self.angle = 2 * Geometry.acos(center_x / self.radius)
+		else:
+			self.angle = 360
+			
 		#距离
-		#self.distance = self.length
+		self.distance = Geometry.radian(self.angle) * self.radius
+	
+	@testmethod
+	def test(self):
+		a = Arc(length=20.0, middle=-10.0)
+		print a.center, a.radius, a.angle, a.distance
 
 
 #描述移动的轨迹
@@ -478,8 +521,8 @@ class Route:
 	def next(self):
 		pass
 
-	@staticmethod
-	def test():
+	@testmethod
+	def test(self):
 		route = Route(line=[Line(length=1), Line(length=2)], speed=1)
 
 
@@ -555,8 +598,8 @@ class Buffer:
 		#创建时间
 		self.create_time = Time.clock()
 	
-	@staticmethod
-	def test():
+	@testmethod
+	def test(self):
 		o = Object()
 		o.wrap_interface()
 		o.wrap_event()
@@ -590,6 +633,7 @@ def main():
 	Rect.test()
 	Sector.test()
 	Line.test()
+	Arc.test()
 
 
 if __name__ == '__main__':
