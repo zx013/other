@@ -36,6 +36,18 @@ def testmethod(fun):
 	return run
 
 
+class Lambda:
+	def __init__(self, func, input=lambda x: x, output=lambda x: x):
+		if hasattr(func, '__call__'):
+			self.func = lambda x: output(func(input(x)))
+		else:
+			self.func = lambda x: output(func)
+
+	def __call__(self, *args, **kwargs):
+		return self.func(*args, **kwargs)
+
+
+
 import time
 import itertools
 
@@ -58,6 +70,11 @@ class Time:
 	@staticmethod
 	def through():
 		return itertools.count(0)
+
+	#普通时间转换为时间片
+	@staticmethod
+	def convert_frequency(t):
+		return t / Time.frequency
 
 
 class Event:
@@ -238,12 +255,12 @@ class Geometry:
 
 	#旋转，点沿着圆心顺时针旋转
 	@staticmethod
-	def rotate(pos, center, angle):
-		x, y = pos
+	def rotate(offset, center, angle):
+		x, y = offset
 		rx, ry = center
-		direct = Geometry.radian(angle)
-		sin = math.sin(direct)
-		cos = math.cos(direct)
+		rotate = Geometry.radian(angle)
+		sin = math.sin(rotate)
+		cos = math.cos(rotate)
 		rotate_x = (y - ry) * sin + (x - rx) * cos + rx
 		rotate_y = (y - ry) * cos - (x - rx) * sin + ry
 		return rotate_x, rotate_y
@@ -252,32 +269,39 @@ class Geometry:
 	@staticmethod
 	def offset(pos, offset):
 		x, y = pos
-		ox, oy = offset
-		return x + ox, y + oy
+		offset_x, offset_y = offset
+		return x + offset_x, y + offset_y
 
-#相对坐标的一些操作，绕原点旋转direct，移动pos后得到
+#相对坐标的一些操作，绕原点旋转rotate，移动pos后得到
 class Coordinate(object):
 	def __init__(self, **kwargs):
-		pos = kwargs.get('pos', (0, 0))
-		self.set_pos(pos)
+		rotate = kwargs.get('rotate', 0)
+		self.set_rotate(rotate)
 
-		direct = kwargs.get('direct', 0)
-		self.set_direct(direct)
+		offset = kwargs.get('offset', (0, 0))
+		self.set_offset(offset)
 
-	#位置，相对坐标
-	def set_pos(self, pos):
-		self.pos = pos
-		self.x, self.y = self.pos
+		expand = kwargs.get('expand', 0)
+		self.set_expand(expand)
 
 	#方向，相对坐标
-	def set_direct(self, direct):
-		self.direct = direct
+	def set_rotate(self, rotate):
+		self.rotate = rotate
+
+	#位置，相对坐标
+	def set_offset(self, offset):
+		self.offset = offset
+		self.offset_x, self.offset_y = self.offset
+
+	#扩张
+	def set_expand(self, expand):
+		self.expand = expand
 
 	#可用缓存
-	#经过pos, direct移动旋转后pos的位置
+	#经过pos, rotate移动旋转后pos的位置
 	def adjust(self, pos):
-		pos = Geometry.rotate(pos, (0, 0), self.direct)
-		pos = Geometry.offset(pos, self.pos)
+		pos = Geometry.rotate(pos, (0, 0), self.rotate)
+		pos = Geometry.offset(pos, self.offset)
 		return pos
 
 
@@ -300,9 +324,9 @@ class Rect(Coordinate):
 
 	@testmethod
 	def test(self):
-		rect = Rect(pos=(1.0, 1.0), width=2.0, height=4.0)
+		rect = Rect(offset=(1.0, 1.0), width=2.0, height=4.0)
 		print rect.wrap_center, rect.wrap_radius
-		rect.set_direct(45.0)
+		rect.set_rotate(45.0)
 		print rect.adjust(rect.wrap_center)
 
 
@@ -377,10 +401,10 @@ class Shape(Coordinate):
 
 	@testmethod
 	def test(self):
-		shape1 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 0.0), direct=0.0)
-		shape2 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 5.0), direct=0.0)
+		shape1 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], offset=(0.0, 0.0), rotate=0.0)
+		shape2 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], offset=(0.0, 5.0), rotate=0.0)
 		print shape1.wrap_collide(shape2)
-		shape2.set_pos((0.0, 4.0))
+		shape2.set_offset((0.0, 4.0))
 		print shape1.wrap_collide(shape2)
 
 
@@ -398,10 +422,7 @@ class Motion(object):
 	def __init__(self, **kwargs):
 		#speed，每个时间片运行速度
 		speed = kwargs.get('speed', 0)
-		if hasattr(speed, '__call__'):
-			self.speed = lambda t: speed(t / Time.frequency) / Time.frequency
-		else:
-			self.speed = lambda t: speed / Time.frequency
+		self.speed = Lambda(speed, input=Time.convert_frequency, output=Time.convert_frequency)
 
 		#time，运行的总时间片数，匀速运动
 		self.time = kwargs.get('time', 0)
@@ -515,21 +536,23 @@ class Arc(Coordinate, Motion):
 
 
 #描述移动的轨迹
-class Route:
+class Route(Coordinate):
 	def __init__(self, **kwargs):
+		Coordinate.__init__(self, **kwargs)
+
 		#轨迹包含的线段
-		self.wire = kwargs['wire']
+		self.compose = kwargs['compose']
 
 	#获取下一个路径点
 	def move(self):
-		for w in self.wire:
+		for w in self.compose:
 			g = w.move()
 			for p in g:
 				yield p
 
 	@testmethod
 	def test(self):
-		route = Route(wire=[Line(length=20.0, speed=500.0, cycle=2), Arc(pos=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+		route = Route(compose=[Line(length=20.0, speed=500.0, cycle=2), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
 		g = route.move()
 		for p in g:
 			print p
@@ -544,7 +567,7 @@ class Object(Base):
 		self.shape = Shape()
 
 		#轨迹
-		self.route = Route(wire=[])
+		self.route = Route(compose=[])
 
 		#静态属性，不变化或者极少变化的值
 		self.attribute = {}
