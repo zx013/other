@@ -30,6 +30,7 @@ def testmethod(fun):
 		print '%s: INIT' % self.__name__
 		result = fun(self, *args, **kwargs)
 		print '%s: DESTROY' % self.__name__
+		print
 		return result
 	run = classmethod(run)
 	return run
@@ -134,7 +135,7 @@ class Geometry:
 	@staticmethod
 	def radian(angle):
 		return angle * math.pi / 180
-	
+
 	#弧度转换为角度
 	@staticmethod
 	def angle(radian):
@@ -147,15 +148,15 @@ class Geometry:
 	@staticmethod
 	def cos(angle):
 		return math.cos(Geometry.radian(angle))
-	
+
 	@staticmethod
 	def asin(ratio):
 		return Geometry.angle(math.asin(ratio))
-		
+
 	@staticmethod
 	def acos(ratio):
 		return Geometry.angle(math.acos(ratio))
-		
+
 	#计算投影距离
 	@staticmethod
 	def shadow(pos1, pos2):
@@ -235,18 +236,24 @@ class Geometry:
 		x21, y21 = arc2.source
 		x22, y22 = arc2.target
 
-	#旋转，点沿着圆心顺时针旋转了一小段距离
+	#旋转，点沿着圆心顺时针旋转
 	@staticmethod
-	def rotate(pos, center, step):
+	def rotate(pos, center, angle):
 		x, y = pos
 		rx, ry = center
-		radius = Geometry.distance(pos, center) #用缓存避免重复计算
-		direct = step / radius
+		direct = Geometry.radian(angle)
 		sin = math.sin(direct)
 		cos = math.cos(direct)
 		rotate_x = (y - ry) * sin + (x - rx) * cos + rx
 		rotate_y = (y - ry) * cos - (x - rx) * sin + ry
 		return rotate_x, rotate_y
+
+	#偏移，pos移动offset距离
+	@staticmethod
+	def offset(pos, offset):
+		x, y = pos
+		ox, oy = offset
+		return x + ox, y + oy
 
 #相对坐标的一些操作，绕原点旋转direct，移动pos后得到
 class Coordinate(object):
@@ -268,13 +275,10 @@ class Coordinate(object):
 
 	#可用缓存
 	#经过pos, direct移动旋转后pos的位置
-	def rotate(self, pos, shape):
-		x, y = pos
-		sin = Geometry.sin(self.direct + shape.direct)
-		cos = Geometry.cos(self.direct + shape.direct)
-		rotate_x = y * sin + x * cos + self.x + shape.x
-		rotate_y = y * cos - x * sin + self.y + shape.y
-		return rotate_x, rotate_y
+	def adjust(self, pos):
+		pos = Geometry.rotate(pos, (0, 0), self.direct)
+		pos = Geometry.offset(pos, self.pos)
+		return pos
 
 
 #矩形，以矩形下底边中点为原点
@@ -296,10 +300,10 @@ class Rect(Coordinate):
 
 	@testmethod
 	def test(self):
-		r = Rect(pos=(1.0, 1.0), width=2.0, height=4.0)
-		print r.wrap_center, r.wrap_radius
-		r.set_direct(45.0)
-		print r.rotate(r.wrap_center, Shape())
+		rect = Rect(pos=(1.0, 1.0), width=2.0, height=4.0)
+		print rect.wrap_center, rect.wrap_radius
+		rect.set_direct(45.0)
+		print rect.adjust(rect.wrap_center)
 
 
 #扇形，以圆心为原点
@@ -312,7 +316,7 @@ class Sector(Coordinate):
 
 		#角度
 		self.angle = kwargs.get('angle', 90)
-		
+
 		#从半径中切除的部分，以实现扇形
 		self.slice = kwargs.get('slice', 0)
 
@@ -338,8 +342,8 @@ class Sector(Coordinate):
 
 	@testmethod
 	def test(self):
-		s = Sector(radius=2.0, angle=90.0)
-		print s.wrap_center, s.wrap_radius
+		sector = Sector(radius=2.0, angle=90.0)
+		print sector.wrap_center, sector.wrap_radius
 
 
 #描述物体的形状
@@ -354,8 +358,9 @@ class Shape(Coordinate):
 	def wrap_collide(self, shape):
 		for c1 in self.compose:
 			for c2 in shape.compose:
-				r1 = c1.rotate(c1.wrap_center, self) #用缓存避免重复计算
-				r2 = c2.rotate(c2.wrap_center, shape)
+				#先根据自身坐标调整，再根据地图坐标调整
+				r1 = self.adjust(c1.adjust(c1.wrap_center)) #用缓存避免重复计算
+				r2 = shape.adjust(c2.adjust(c2.wrap_center))
 				distance = Geometry.distance(r1, r2)
 				if distance < c1.wrap_radius + c2.wrap_radius:
 					return True
@@ -372,11 +377,11 @@ class Shape(Coordinate):
 
 	@testmethod
 	def test(self):
-		s1 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 0.0), direct=0.0)
-		s2 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 5.0), direct=0.0)
-		print s1.wrap_collide(s2)
-		s2.set_pos((0.0, 4.0))
-		print s1.wrap_collide(s2)
+		shape1 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 0.0), direct=0.0)
+		shape2 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], pos=(0.0, 5.0), direct=0.0)
+		print shape1.wrap_collide(shape2)
+		shape2.set_pos((0.0, 4.0))
+		print shape1.wrap_collide(shape2)
 
 
 #物体沿着轨迹运动
@@ -444,14 +449,15 @@ class Line(Coordinate, Motion):
 		#距离
 		self.distance = self.length
 
+	#输入点和移动步长，返回移动后的位置
 	def step(self, pos, step):
 		x, y = pos
 		return x, y + step
 
 	@testmethod
 	def test(self):
-		l = Line(length=20.0, speed=500.0, cycle=2)
-		g = l.move()
+		line = Line(length=20.0, speed=500.0, cycle=2)
+		g = line.move()
 		for p in g:
 			print p
 
@@ -465,7 +471,7 @@ class Arc(Coordinate, Motion):
 		self.length = kwargs['length']
 
 		middle = kwargs['middle']
-		#中间点，middle=0是为圆
+		#中间点，middle=0为圆
 		self.middle = (middle, self.length / 2)
 
 		#源点
@@ -485,45 +491,48 @@ class Arc(Coordinate, Motion):
 
 		#角度
 		center_x, center_y = self.center
-		
+
 		if middle > 0:
 			self.angle = 360 - 2 * Geometry.acos(center_x / self.radius)
 		elif middle < 0:
 			self.angle = 2 * Geometry.acos(center_x / self.radius)
 		else:
 			self.angle = 360
-			
+
 		#距离
 		self.distance = Geometry.radian(self.angle) * self.radius
-	
+
+	def step(self, pos, step):
+		return Geometry.rotate(pos, self.center, step / self.radius)
+
 	@testmethod
 	def test(self):
-		a = Arc(length=20.0, middle=-10.0)
-		print a.center, a.radius, a.angle, a.distance
+		arc = Arc(length=20.0, middle=-10.0, speed=1500.0)
+		print arc.center, arc.radius, arc.angle, arc.distance
+		g = arc.move()
+		for p in g:
+			print p
 
 
 #描述移动的轨迹
 class Route:
 	def __init__(self, **kwargs):
 		#轨迹包含的线段
-		self.line = []
-
-		#运行速度
-		self.speed = 0
-
-		#运行时间
-		self.time = 0
-
-		#路径包含的点，从源点到目标点依次排列
-		self.point = []
+		self.wire = kwargs['wire']
 
 	#获取下一个路径点
-	def next(self):
-		pass
+	def move(self):
+		for w in self.wire:
+			g = w.move()
+			for p in g:
+				yield p
 
 	@testmethod
 	def test(self):
-		route = Route(line=[Line(length=1), Line(length=2)], speed=1)
+		route = Route(wire=[Line(length=20.0, speed=500.0, cycle=2), Arc(pos=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+		g = route.move()
+		for p in g:
+			print p
 
 
 class Object(Base):
@@ -535,7 +544,7 @@ class Object(Base):
 		self.shape = Shape()
 
 		#轨迹
-		self.route = Route()
+		self.route = Route(wire=[])
 
 		#静态属性，不变化或者极少变化的值
 		self.attribute = {}
@@ -597,7 +606,7 @@ class Buffer:
 
 		#创建时间
 		self.create_time = Time.clock()
-	
+
 	@testmethod
 	def test(self):
 		o = Object()
@@ -606,7 +615,7 @@ class Buffer:
 		o.set_property('a', 1)
 		print o.get_property('a')
 		print o.get_attribute('a', 2)
-		
+
 		buf1 = o.create_buffer()
 		buf1.priority_level = 0
 		o.insert_buffer(buf1)
@@ -629,11 +638,12 @@ class Buffer:
 
 def main():
 	Buffer.test()
-	Shape.test()
 	Rect.test()
 	Sector.test()
+	Shape.test()
 	Line.test()
 	Arc.test()
+	Route.test()
 
 
 if __name__ == '__main__':
