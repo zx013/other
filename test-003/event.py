@@ -41,7 +41,7 @@ def testmethod(fun):
 #不能够被改变的成员无需改动，直接使用即可
 #能够被改变的成员必需封装到lambda中，用函数调用形式使用
 #外部改变时，递归式只需改变递归值即可，非递归式则需再次封装一层，两者实现的效果不同
-class Lambda:
+class Iterate:
 	def __init__(self, func, input=lambda x: x, output=lambda x: x, **kwargs):
 		#recurse为递归初值，未设置则视为非递归
 		if kwargs.has_key('recurse'):
@@ -61,9 +61,9 @@ class Lambda:
 	
 	@testmethod
 	def test(self):
-		a1 = Lambda(1, recurse=2)
+		a1 = Iterate(1, recurse=2)
 		print a1(), a1(), a1()
-		a2 = Lambda(lambda x: x + 1, recurse=2)
+		a2 = Iterate(lambda x: x + 1, recurse=2)
 		print a2(), a2(), a2()
 
 
@@ -441,7 +441,7 @@ class Motion(object):
 	def __init__(self, **kwargs):
 		#speed，每个时间片运行速度
 		speed = kwargs.get('speed', 0)
-		self.speed = Lambda(speed, input=Time.convert_frequency, output=Time.convert_frequency)
+		self.speed = Iterate(speed, input=Time.convert_frequency, output=Time.convert_frequency)
 
 		#time，运行的总时间片数，匀速运动
 		self.time = kwargs.get('time', 0)
@@ -679,7 +679,7 @@ class Buffer:
 
 
 def main():
-	Lambda.test()
+	Iterate.test()
 	Buffer.test()
 	Rect.test()
 	Sector.test()
