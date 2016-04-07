@@ -1,3 +1,103 @@
+compose: 组成整体的个体
+interface: 个体操作的接口
+implement: 整体实现
+
+模块划分
+基本(base)
+	物体(object)
+	
+
+时间(time)
+	时钟(clock)
+	定时器(timer)
+
+事件(event)
+
+物品(item)
+
+战斗(battle)
+	compose:
+		状态(buff)
+	interface:
+		攻击(attack)
+		施法(magic)
+	implement:
+
+技能(skill)
+
+地图(map)
+	compose:
+		元素(element)
+		形状(shape)
+		轨迹(route)
+	interface:
+		碰撞(collide)
+		移动(move)
+		寻径(path)
+		保存(save)
+		恢复(restore)
+	implement:
+	
+操作者(operate)[包括一系列物体及其子物体]
+#交互(interactive)
+	compose:
+		物体<object>
+		物品<item>
+		#信息(info)
+		#动作(action)
+	interface:
+		交流(talk)
+		给予(give)
+		交换(exchange)
+		共享(share)
+	implement:
+
+人物
+	队伍
+	派别
+
+剧情(story)[一系列交互的集合]
+	交互
+	分支
+
+任务(task)
+
+显示(show)
+	界面(interface)
+	动画(movie)
+
+
+进度(schedule):
+	开始
+	暂停
+	退出
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 操作者(operate)
 能够操作一个或多个物体
