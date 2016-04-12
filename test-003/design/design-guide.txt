@@ -43,6 +43,7 @@ implement: 整体实现
 显示(show)
 	界面(interface)
 	菜单(menu)
+	音乐(music)
 	动画(movie)
 
 进度(schedule)
