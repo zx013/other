@@ -77,8 +77,8 @@ class Shape(Coordinate):
 		for c1 in self.compose:
 			for c2 in shape.compose:
 				#先根据扇形和矩形自身的坐标调整
-				r1 = c1.adjust(c1.wrap_center) #用缓存避免重复计算
-				r2 = c2.adjust(c2.wrap_center)
+				r1 = self.adjust(c1.adjust(c1.wrap_center)) #用缓存避免重复计算
+				r2 = shape.adjust(c2.adjust(c2.wrap_center))
 				distance = Geometry.distance(r1, r2)
 				if distance < c1.wrap_radius + c2.wrap_radius:
 					return True

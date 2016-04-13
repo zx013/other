@@ -86,6 +86,7 @@ class Arc(Coordinate, Motion):
 
 
 #描述移动的轨迹
+#Coordinate的偏移为地图上的偏移
 class Route(Coordinate):
 	def __init__(self, **kwargs):
 		Coordinate.__init__(self, **kwargs)
@@ -98,12 +99,12 @@ class Route(Coordinate):
 		for w in self.compose:
 			g = w.move()
 			for p in g:
-				p = [w.adjust(v) for v in p]
+				p = [self.adjust(w.adjust(v)) for v in p] #根据整体偏移进行调整
 				yield p
 
 	@classmethod
 	def sample(self):
-		return Route(compose=[Line(length=20.0, speed=500.0, cycle=2), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+		return Route(compose=[Line(length=20.0, speed=500.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
 	
 	@testmethod
 	def test(self):
