@@ -133,13 +133,13 @@ class Geometry:
 #相对坐标的一些操作，绕原点旋转rotate，移动pos后得到
 class Coordinate(object):
 	def __init__(self, **kwargs):
-		rotate = kwargs.get('rotate', 0)
+		rotate = kwargs.get('rotate', 0.0)
 		self.set_rotate(rotate)
 
-		offset = kwargs.get('offset', (0, 0))
+		offset = kwargs.get('offset', (0.0, 0.0))
 		self.set_offset(offset)
 
-		expand = kwargs.get('expand', 0)
+		expand = kwargs.get('expand', 0.0)
 		self.set_expand(expand)
 
 	#方向，相对坐标
@@ -156,7 +156,7 @@ class Coordinate(object):
 		self.expand = expand
 
 	#可用缓存
-	#经过pos, rotate移动旋转后pos的位置
+	#经过offset, rotate移动旋转后pos的位置
 	def adjust(self, pos):
 		pos = Geometry.rotate(pos, (0, 0), self.rotate)
 		pos = Geometry.offset(pos, self.offset)
@@ -176,13 +176,13 @@ class Motion(object):
 
 	def __init__(self, **kwargs):
 		#speed，每个时间片运行速度
-		speed = kwargs.get('speed', 0)
+		speed = kwargs.get('speed', 0.0)
 		self.speed = Iterate(speed, input=Time.convert_frequency, output=Time.convert_frequency)
 
 		#time，运行的总时间片数，匀速运动
 		self.time = kwargs.get('time', 0)
 
-		#是否周期
+		#循环次数
 		self.cycle = kwargs.get('cycle', 1)
 
 	def move(self):

@@ -93,16 +93,21 @@ class Route(Coordinate):
 		#轨迹包含的线段
 		self.compose = kwargs['compose']
 
-	#获取下一个路径点
+	#获取下一个路径点及所在的轨迹
 	def move(self):
 		for w in self.compose:
 			g = w.move()
 			for p in g:
+				p = [w.adjust(v) for v in p]
 				yield p
 
+	@classmethod
+	def sample(self):
+		return Route(compose=[Line(length=20.0, speed=500.0, cycle=2), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+	
 	@testmethod
 	def test(self):
-		route = Route(compose=[Line(length=20.0, speed=500.0, cycle=2), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+		route = Route.sample()
 		g = route.move()
 		for p in g:
 			print p

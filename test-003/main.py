@@ -20,3 +20,4 @@ if __name__ == '__main__':
 	Route.test()
 
 	from core.battle.skill import Skill
+	Skill.test()

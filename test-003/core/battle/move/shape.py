@@ -36,10 +36,7 @@ class Sector(Coordinate):
 		self.radius = kwargs['radius']
 
 		#角度
-		self.angle = kwargs.get('angle', 90)
-
-		#从半径中切除的部分，以实现扇形
-		self.slice = kwargs.get('slice', 0)
+		self.angle = kwargs.get('angle', 90.0)
 
 		#圆心
 		self.center = (0, 0)
@@ -79,9 +76,9 @@ class Shape(Coordinate):
 	def wrap_collide(self, shape):
 		for c1 in self.compose:
 			for c2 in shape.compose:
-				#先根据自身坐标调整，再根据地图坐标调整
-				r1 = self.adjust(c1.adjust(c1.wrap_center)) #用缓存避免重复计算
-				r2 = shape.adjust(c2.adjust(c2.wrap_center))
+				#先根据扇形和矩形自身的坐标调整
+				r1 = c1.adjust(c1.wrap_center) #用缓存避免重复计算
+				r2 = c2.adjust(c2.wrap_center)
 				distance = Geometry.distance(r1, r2)
 				if distance < c1.wrap_radius + c2.wrap_radius:
 					return True
@@ -96,10 +93,15 @@ class Shape(Coordinate):
 				pass
 		return True
 
+	@classmethod
+	def sample(self):
+		return Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)])
+
 	@testmethod
 	def test(self):
-		shape1 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], offset=(0.0, 0.0), rotate=0.0)
-		shape2 = Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)], offset=(0.0, 5.0), rotate=0.0)
+		shape1 = Shape.sample()
+		shape2 = Shape(compose=[Rect(width=2.0, height=4.0, offset=(0.0, 5.0)), Sector(radius=2.0, angle=90.0, offset=(0.0, 5.0))])
 		print shape1.wrap_collide(shape2)
-		shape2.set_offset((0.0, 4.0))
+		shape2.compose[0].set_offset((0.0, 4.0))
+		shape2.compose[1].set_offset((0.0, 4.0))
 		print shape1.wrap_collide(shape2)
