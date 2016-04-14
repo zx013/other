@@ -2,6 +2,7 @@
 from core.battle.move.shape import Shape
 from core.battle.move.route import Route
 from core.object import Object
+from core.event import event, bind
 
 class Skill(object):
 	def __init__(self, **kwargs):
@@ -49,9 +50,18 @@ class Skill(object):
 		self.set_adjust()
 		generator = self.route.move()
 		for point_list in generator:
-			print point_list
+			yield point_list
 			if self.follow:
 				self.set_adjust()
+
+	def start(self):
+		self.g = self.run()
+
+	@staticmethod
+	@bind(('TIME_EVENT', 'TIMER'))
+	def step():
+		#print 'abc%sabc' % str(self.g.next())
+		print 'abc'
 
 	@classmethod
 	def sample(self):
@@ -61,4 +71,6 @@ class Skill(object):
 	def test(self):
 		skill = self.sample()
 		skill.release()
-		skill.run()
+		skill.start()
+		print event.event
+		#event.bind(('TIME_EVENT', 'TIMER'), skill.step)

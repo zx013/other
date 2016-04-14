@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 import math
-from core.time import Time
+from core.clock import Clock
 from core.tools import Iterate
 
 #几何图形的相关计算
@@ -177,7 +177,7 @@ class Motion(object):
 	def __init__(self, **kwargs):
 		#speed，每个时间片运行速度
 		speed = kwargs.get('speed', 0.0)
-		self.speed = Iterate(speed, input=Time.convert_frequency, output=Time.convert_frequency)
+		self.speed = Iterate(speed, input=Clock.convert_frequency, output=Clock.convert_frequency)
 
 		#time，运行的总时间片数，匀速运动
 		self.time = kwargs.get('time', 0)
@@ -186,7 +186,7 @@ class Motion(object):
 		self.cycle = kwargs.get('cycle', 1)
 
 	def move(self):
-		t = Time.through()
+		t = Clock.through()
 		for c in xrange(self.cycle):
 			slice_pos = self.source #时间片起点时的位置
 			residual_distance = self.distance #剩余长度
