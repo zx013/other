@@ -22,7 +22,7 @@ def testclass(modulename, cls):
 #自动测试
 #测试类中sample是否返回类
 #调用测试test函数
-def autotest(ignore=[]):
+def autotest(allow=[], ignore=[]):
 	path = os.curdir + os.sep
 	generator = os.walk(path)
 	for root, dirs, files in generator:
@@ -40,7 +40,9 @@ def autotest(ignore=[]):
 					continue
 				if not isinstance(cls, type): #类（根类为object）
 					continue
-				if 0 in [cls.__module__.find(i) for i in ignore]: #忽略的模块
+				if module.__name__ != cls.__module__: #导入的模块
+					continue
+				if 0 not in [cls.__module__.find(s) for s in allow] and 0 in [cls.__module__.find(s) for s in ignore]:
 					continue
 				#print key, cls, type(cls)
 				testclass(modulename, cls)

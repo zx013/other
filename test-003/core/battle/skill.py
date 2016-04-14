@@ -54,7 +54,11 @@ class Skill(object):
 				self.set_adjust()
 
 	@classmethod
+	def sample(self):
+		return Skill(object=Object.sample(), shape=Shape.sample(), route=Route.sample())
+
+	@classmethod
 	def test(self):
-		skill = Skill(object=Object.sample(), shape=Shape.sample(), route=Route.sample())
+		skill = self.sample()
 		skill.release()
 		skill.run()
