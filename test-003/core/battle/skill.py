@@ -1,17 +1,16 @@
 #-*- coding:utf-8 -*-
-from move.shape import Shape
-from move.route import Route
+from core.battle.move.shape import Shape
+from core.battle.move.route import Route
 from core.object import Object
-from core.test import testmethod
 
 class Skill:
 	def __init__(self, **kwargs):
-		self.object = None
-		
+		self.object = kwargs['object']
+
 		self.shape = kwargs['shape']
-		
+
 		self.route = kwargs['route']
-		
+
 		#跟随，技能移动时是否根据物体动态坐标实时计算位置，如钩子
 		self.follow = kwargs.get('follow', False)
 
@@ -33,10 +32,10 @@ class Skill:
 
 	def _release_object(self, target_object):
 		pass
-	
+
 	def _release_point(self, target_point):
 		pass
-	
+
 	def _release_none(self):
 		pass
 
@@ -47,13 +46,15 @@ class Skill:
 		self.route.set_rotate(self.object.rotate)
 
 	def run(self):
-		
+		self.set_adjust()
 		generator = self.route.move()
 		for point_list in generator:
 			print point_list
-		
-	@testmethod
+			if self.follow:
+				self.set_adjust()
+
+	@classmethod
 	def test(self):
-		skill = Skill(shape=Shape.sample(), route=Route.sample())
+		skill = Skill(object=Object.sample(), shape=Shape.sample(), route=Route.sample())
 		skill.release()
 		skill.run()

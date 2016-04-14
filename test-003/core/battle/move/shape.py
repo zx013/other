@@ -1,6 +1,5 @@
 #-*- coding:utf-8 -*-
 from geometry import Geometry, Coordinate
-from core.test import testmethod
 
 #矩形，以矩形下底边中点为原点
 class Rect(Coordinate):
@@ -19,7 +18,7 @@ class Rect(Coordinate):
 		#包络半径
 		self.wrap_radius = Geometry.distance(self.wrap_center, (self.width / 2, 0))
 
-	@testmethod
+	@classmethod
 	def test(self):
 		rect = Rect(offset=(1.0, 1.0), width=2.0, height=4.0)
 		print rect.wrap_center, rect.wrap_radius
@@ -58,7 +57,7 @@ class Sector(Coordinate):
 			self.wrap_center = self.center
 			self.wrap_radius = self.radius
 
-	@testmethod
+	@classmethod
 	def test(self):
 		sector = Sector(radius=2.0, angle=90.0)
 		print sector.wrap_center, sector.wrap_radius
@@ -97,7 +96,7 @@ class Shape(Coordinate):
 	def sample(self):
 		return Shape(compose=[Rect(width=2.0, height=4.0), Sector(radius=2.0, angle=90.0)])
 
-	@testmethod
+	@classmethod
 	def test(self):
 		shape1 = Shape.sample()
 		shape2 = Shape(compose=[Rect(width=2.0, height=4.0, offset=(0.0, 5.0)), Sector(radius=2.0, angle=90.0, offset=(0.0, 5.0))])

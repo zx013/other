@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-from core.test import testmethod
 
 #封装的函数为递归式与非递归式，递归式由上一次状态计算得出，非递归式则直接算出
 #类成员在使用时会随时间片实时改变，其中改变分为内部或外部改变
@@ -24,7 +23,7 @@ class Iterate:
 		else:
 			return self.func(*args, **kwargs)
 	
-	@testmethod
+	@classmethod
 	def test(self):
 		a1 = Iterate(1, recurse=2)
 		print a1(), a1(), a1()

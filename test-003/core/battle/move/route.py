@@ -1,6 +1,5 @@
 #-*- coding:utf-8 -*-
 from geometry import Geometry, Coordinate, Motion
-from core.test import testmethod
 
 #Ïß¶Î
 class Line(Coordinate, Motion):
@@ -25,7 +24,7 @@ class Line(Coordinate, Motion):
 		x, y = pos
 		return x, y + step
 
-	@testmethod
+	@classmethod
 	def test(self):
 		line = Line(length=20.0, speed=500.0, cycle=2)
 		g = line.move()
@@ -76,7 +75,7 @@ class Arc(Coordinate, Motion):
 	def step(self, pos, step):
 		return Geometry.rotate(pos, self.center, step / self.radius)
 
-	@testmethod
+	@classmethod
 	def test(self):
 		arc = Arc(length=20.0, middle=-10.0, speed=1500.0)
 		print arc.center, arc.radius, arc.angle, arc.distance
@@ -106,7 +105,7 @@ class Route(Coordinate):
 	def sample(self):
 		return Route(compose=[Line(length=20.0, speed=500.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
 	
-	@testmethod
+	@classmethod
 	def test(self):
 		route = Route.sample()
 		g = route.move()
