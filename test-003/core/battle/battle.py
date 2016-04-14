@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 
-class Battle:
+class Battle(object):
 	'''
 	<object> use <skill> add <buff> to <objcet>
 		<object> create <skill>

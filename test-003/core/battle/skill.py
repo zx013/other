@@ -3,7 +3,7 @@ from core.battle.move.shape import Shape
 from core.battle.move.route import Route
 from core.object import Object
 
-class Skill:
+class Skill(object):
 	def __init__(self, **kwargs):
 		self.object = kwargs['object']
 

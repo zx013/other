@@ -2,11 +2,6 @@
 import os
 import importlib
 
-class CLASSOBJ:
-	pass
-
-classobj = [type(CLASSOBJ), type(type)]
-
 
 def testclass(modulename, cls):
 	if hasattr(cls, 'sample'):
@@ -27,22 +22,25 @@ def testclass(modulename, cls):
 #自动测试
 #测试类中sample是否返回类
 #调用测试test函数
-#ignore用分隔'\\'结尾的话，当前目录不忽略
 def autotest(ignore=[]):
 	path = os.curdir + os.sep
 	generator = os.walk(path)
 	for root, dirs, files in generator:
 		root = root.split(path, 1)[1]
-		if 0 in [root.find(i) for i in ignore]:
-			continue
 		for filespath in files:
 			if filespath[-3:] != '.py':
 				continue
 			modulename = os.path.join(root, filespath)[:-3].replace(os.sep, '.')
-			module = importlib.import_module(modulename)
+			try:
+				module = importlib.import_module(modulename)
+			except:
+				continue
 			for key, cls in vars(module).items():
-				if key[:2] == key[-2:] == '__':
+				if key[:2] == key[-2:] == '__': #魔术方法
 					continue
-				if type(cls) not in classobj:
+				if not isinstance(cls, type): #类（根类为object）
 					continue
+				if 0 in [cls.__module__.find(i) for i in ignore]: #忽略的模块
+					continue
+				#print key, cls, type(cls)
 				testclass(modulename, cls)

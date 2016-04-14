@@ -5,7 +5,7 @@
 #不能够被改变的成员无需改动，直接使用即可
 #能够被改变的成员必需封装到lambda中，用函数调用形式使用
 #外部改变时，递归式只需改变递归值即可，非递归式则需再次封装一层，两者实现的效果不同
-class Iterate:
+class Iterate(object):
 	def __init__(self, func, input=lambda x: x, output=lambda x: x, **kwargs):
 		#recurse为递归初值，未设置则视为非递归
 		if kwargs.has_key('recurse'):

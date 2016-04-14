@@ -8,5 +8,5 @@ sys.path.append('.') #Ìí¼Óµ½ËÑË÷Â·¾¶
 from core.test import autotest
 
 if __name__ == '__main__':
-	autotest(ignore=['design', 'core\\battle\\move'])
+	autotest(ignore=['design', 'core.battle.move'])
 	
