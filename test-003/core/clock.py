@@ -2,7 +2,7 @@
 import time
 import itertools
 import thread
-from core.event import event, signal
+from core.event import signal
 
 #时间，单位都为毫秒，sleep最小支持1ms，误差1-2%
 class Clock(object):
@@ -12,13 +12,25 @@ class Clock(object):
 	#频率，每秒运行次数
 	frequency = 1000 / interval
 
+	#定时器运行次数
+	number = 0
+	
 	@staticmethod
 	def timer():
 		def _timer():
 			while 1:
-				event.signal(('TIME_EVENT', 'TIMER'))
+				signal(('TIME_EVENT', 'TIMER'))
+				Clock.number += 1
 				Clock.sleep(Clock.interval)
 		thread.start_new_thread(_timer, ())
+
+	#延时执行
+	@staticmethod
+	def delay(t, func, *args, **kwargs):
+		def _delay():
+			func(*args, **kwargs)
+		Clock.sleep(t)
+		thread.start_new_thread(_delay, ())
 
 	@staticmethod
 	def clock():

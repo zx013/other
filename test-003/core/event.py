@@ -12,46 +12,24 @@ class Event(object):
 	def bind(self, e, func):
 		self.event.setdefault(e, [])
 		self.event[e].append(func)
+
+	def unbind(self, e, func):
+		if func in self.event[e]:
+			self.event[e].remove(func)
 	
 	@classmethod
 	def test(self):
-		def fun1(**kwargs):
-			print 'fun1', kwargs
-		event.bind(('EVENT', 'fun1'), fun1)
-		event.signal(('EVENT', 'fun1'), a=1, b=2)
+		def fun(**kwargs):
+			print 'fun', kwargs
+		event.bind(('EVENT', 'fun'), fun)
+		event.signal(('EVENT', 'fun'), a=1, b=2)
 		
-		@signal(('EVENT', 'fun2'), False)
-		def fun2(**kwargs):
-			print 'fun2', kwargs
-		
-		@bind(('EVENT', 'fun2'))
-		def fun3(**kwargs):
-			print 'fun3', kwargs
-		
-		fun2(a=1, b=2, c=3)
+		event.unbind(('EVENT', 'fun'), fun)
+		event.signal(('EVENT', 'fun'), a=1, b=2)
 			
 		
 event = Event()
 
-#生成事件
-def signal(e, before=True):
-	def _signal(func):
-		def __signal(*args, **kwargs):
-			if before:
-				result = event.signal(e, *args, **kwargs)
-				func(*args, **kwargs)
-			else:
-				func(*args, **kwargs)
-				result = event.signal(e, *args, **kwargs)
-			return result
-		return __signal
-	return _signal
-
-#绑定事件
-def bind(e):
-	def _bind(func):
-		event.bind(e, func)
-		def __bind(*args, **kwargs):
-			return func(*args, **kwargs)
-		return __bind
-	return _bind
+signal = event.signal
+bind = event.bind
+unbind = event.unbind
