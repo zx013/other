@@ -31,6 +31,10 @@ class Geometry(object):
 	def acos(ratio):
 		return Geometry.angle(math.acos(ratio))
 
+	@staticmethod
+	def atan(ratio):
+		return Geometry.angle(math.atan(ratio))
+
 	#计算投影距离
 	@staticmethod
 	def shadow(pos1, pos2):
@@ -110,7 +114,7 @@ class Geometry(object):
 		x21, y21 = arc2.source
 		x22, y22 = arc2.target
 
-	#旋转，点沿着圆心顺时针旋转
+	#旋转，点沿着圆心顺时针旋转，负角度则为逆时针
 	@staticmethod
 	def rotate(pos, center, angle):
 		if angle == 0:
@@ -133,13 +137,14 @@ class Geometry(object):
 	
 	@classmethod
 	def test(self):
+		print Geometry.rotate((0, 0), (1, 0), -90)
 		print Geometry.rotate((0, 0), (1, 0), 90)
 		print Geometry.rotate((0, 0), (1, 0), 180)
 		print Geometry.rotate((0, 0), (1, 0), 270)
 		print Geometry.rotate((0, 0), (1, 0), 360)
 
 
-#相对坐标的一些操作，绕原点旋转rotate，移动pos后得到
+#相对坐标的一些操作，绕原点y轴顺时针旋转rotate，移动pos后得到
 class Coordinate(object):
 	def __init__(self, **kwargs):
 		rotate = kwargs.get('rotate', 0.0)
@@ -213,6 +218,8 @@ class Motion(object):
 				pos = self.step(pos, speed) #移动speed距离
 				frame.append(pos)
 				yield frame
-				if abs(speed) > residual:
+				if pos == self.target: #恰好到达目标点
+					break
+				if abs(speed) > residual: #如果出现错误，导致最后一步不为目标点，则用剩余距离来限制
 					break
 				residual -= speed

@@ -24,15 +24,21 @@ class BuffMove(Buff):
 		self.map_adjust()
 		self.generator = self.object.route.move()
 
+	def turn(self, rotate1, rotate2):
+		#先旋转，再移动
+		#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
+		#在轨迹上移动时朝向会随时变化
+		self.object.set_rotate(rotate2)
+
 	def pre_move(self):
 		pass
 
-	def move(self):
-		#先旋转，再移动
-		#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
-		self.object.set_offset()
-		#在轨迹上移动时朝向会随时变化
-		self.object.set_rotate()
+	def move(self, offset1, offset2):
+		self.object.set_offset(offset2)
+
+	def step(self):
+		self.turn(self.object.rotate, step['direct'])
+		self.move(self.object.offset, step['end'])
 
 	def collide(self):
 		return []
@@ -46,7 +52,7 @@ class BuffMove(Buff):
 			obj.buffpool += self.obj.collide_change
 			self.obj.buffpool += obj.collide_change
 		if self.obj.across or not collide:
-			self.move()
+			self.step()
 
 	#将坐标调整到地图坐标
 	def map_adjust(self):

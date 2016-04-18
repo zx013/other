@@ -129,8 +129,14 @@ class Route(Coordinate):
 			generator = route.move()
 			for frame in generator:
 				frame = [self.adjust(route.adjust(pos)) for pos in frame] #根据地图偏移进行调整
-				move_info = {'start': frame[0], 'end': 1, 'frame': frame, 'direct': 1}
-				yield frame
+
+				start = frame[0] #起点
+				end = frame[-1] #终点
+				frame = frame[:-1] #包含的帧
+				direct = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向
+
+				step = {'start': start, 'end': end, 'frame': frame, 'direct': direct}
+				yield step
 
 	@classmethod
 	def sample(self):
