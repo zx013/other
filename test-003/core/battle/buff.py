@@ -1,18 +1,19 @@
 #-*- coding:utf-8 -*-
 
 class Buff(object):
-	'''
-	'''
 	def __init__(self, **kwargs):
 		pass
 
 
 class BuffPool(object):
 	def __init__(self, **kwargs):
-		pass
+		self.buffpool = []
 	
 	def insert(self, buff):
-		pass
+		self.buffpool.append(buff)
 	
 	def delete(self, buff):
 		pass
+
+	def __iadd__(self, other):
+		self.buffpool += other.buffpool

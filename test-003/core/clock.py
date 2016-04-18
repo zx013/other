@@ -41,7 +41,7 @@ class Clock(object):
 		time.sleep(tm / 1000.0)
 
 	@staticmethod
-	def through():
+	def count():
 		return itertools.count(0)
 
 	#普通时间转换为时间片

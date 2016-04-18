@@ -22,7 +22,10 @@ class Line(Coordinate, Motion):
 	#输入点和移动步长，返回移动后的位置
 	def step(self, pos, step):
 		x, y = pos
-		return x, y + step
+		y += step
+		if y > self.length:
+			y = self.length
+		return x, y
 
 	@classmethod
 	def test(self):
@@ -32,6 +35,7 @@ class Line(Coordinate, Motion):
 			print p
 
 #弧
+#middle==0.0为圆，middle为0.0时为逆时针，middle为-0.0时为顺时针
 class Arc(Coordinate, Motion):
 	def __init__(self, **kwargs):
 		Coordinate.__init__(self, **kwargs)
@@ -48,7 +52,10 @@ class Arc(Coordinate, Motion):
 		self.source = (0, 0)
 
 		#目标点
-		self.target = (0, self.length)
+		if middle:
+			self.target = (0, self.length)
+		else:
+			self.target = self.source
 
 		#圆弧的圆心
 		if middle:
@@ -72,8 +79,31 @@ class Arc(Coordinate, Motion):
 		#距离
 		self.distance = Geometry.radian(self.angle) * self.radius
 
+		#上一个点
+		self.last_step = self.source
+
 	def step(self, pos, step):
-		return Geometry.rotate(pos, self.center, step / self.radius)
+		angle = Geometry.angle(step / self.radius)
+		middle = self.middle[0]
+		if str(middle)[0] != '-': #逆时针
+			angle = 360 - angle
+		x, y =  Geometry.rotate(pos, self.center, angle)
+
+		last = self.last_step[0] #上一个位置x的值，用来判断圆形的时候是否超出范围
+		self.last_step = x, y
+
+		#每次移动不超过半圈
+		if middle * x < 0:
+			return self.target
+		elif middle == 0:
+			if str(middle)[0] != '-':
+				if last < 0 and x > 0:
+					return self.target
+			else:
+				if last > 0 and x < 0:
+					return self.target
+		return x, y
+
 
 	@classmethod
 	def test(self):
@@ -95,16 +125,17 @@ class Route(Coordinate):
 
 	#获取下一个路径点及所在的轨迹
 	def move(self):
-		for w in self.compose:
-			g = w.move()
-			for p in g:
-				p = [self.adjust(w.adjust(v)) for v in p] #根据整体偏移进行调整
-				yield p
+		for route in self.compose:
+			generator = route.move()
+			for frame in generator:
+				frame = [self.adjust(route.adjust(pos)) for pos in frame] #根据地图偏移进行调整
+				move_info = {'start': frame[0], 'end': 1, 'frame': frame, 'direct': 1}
+				yield frame
 
 	@classmethod
 	def sample(self):
 		return Route(compose=[Line(length=20.0, speed=500.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
-	
+
 	@classmethod
 	def test(self):
 		route = Route.sample()

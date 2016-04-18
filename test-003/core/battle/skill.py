@@ -18,14 +18,21 @@ class BuffMove(Buff):
 
 		self.event = ('TIME_EVENT', 'TIMER')
 		
-		#self.number = Clock.number
-		
 		#buff所在的object或skill
 		self.object = object
 
-		self.move_adjust()
+		self.map_adjust()
 		self.generator = self.object.route.move()
 
+	def pre_move(self):
+		pass
+
+	def move(self):
+		#先旋转，再移动
+		#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
+		self.object.set_offset()
+		#在轨迹上移动时朝向会随时变化
+		self.object.set_rotate()
 
 	def collide(self):
 		return []
@@ -35,28 +42,14 @@ class BuffMove(Buff):
 	#计算碰撞
 	def run(self):
 		collide = self.collide()
-		if self.obj.across:
-			for obj in collide:
-				obj.buffpool.add(self.obj.active_collide)
+		for obj in collide:
+			obj.buffpool += self.obj.collide_change
+			self.obj.buffpool += obj.collide_change
+		if self.obj.across or not collide:
 			self.move()
-		else:
-			if collide:
-				for obj in collide:
-					obj.buffpool.add(self.obj.active_collide)
-					self.obj.buffpool.add(obj.passive_collide)
-			else:
-				self.move()
-			
-
-	def move(self):
-		#先旋转，再移动
-		#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
-		self.object.set_offset()
-		#在轨迹上移动时朝向会随时变化
-		self.object.set_rotate()
 
 	#将坐标调整到地图坐标
-	def move_adjust(self):
+	def map_adjust(self):
 		self.object.shape.set_offset(self.object.parent.offset)
 		self.object.shape.set_rotate(self.object.parent.rotate)
 		self.object.route.set_offset(self.object.parent.offset)
@@ -66,8 +59,6 @@ class BuffMove(Buff):
 class Skill(Object):
 	def __init__(self, **kwargs):
 		Object.__init__(self, **kwargs)
-
-		self.parent = kwargs['parent']
 
 		self.shape = kwargs['shape']
 
@@ -79,7 +70,6 @@ class Skill(Object):
 		#碰撞时能否穿过
 		self.across = kwargs.get('across', False)
 
-		self.buffpool = BuffPool()
 		self.buffpool.insert(BuffMove(self))
 
 	#默认传入的参数，source_object
@@ -110,7 +100,7 @@ class Skill(Object):
 
 	@classmethod
 	def sample(self):
-		return Skill(object=Object.sample(), shape=Shape.sample(), route=Route.sample())
+		return Skill(parent=Object.sample(), shape=Shape.sample(), route=Route.sample())
 
 	@classmethod
 	def test(self):

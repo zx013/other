@@ -9,5 +9,5 @@ from core.test import autotest
 
 if __name__ == '__main__':
 	from core.clock import Clock
-	autotest(ignore=['design', 'core.battle.move'])
+	autotest(allow=['core.battle.move.route'], ignore=['design', 'core.battle.move'])
 	Clock.sleep(100)

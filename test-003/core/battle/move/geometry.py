@@ -4,7 +4,7 @@ from core.clock import Clock
 from core.tools import Iterate
 
 #几何图形的相关计算
-class Geometry:
+class Geometry(object):
 	#角度转换为弧度
 	@staticmethod
 	def radian(angle):
@@ -112,10 +112,12 @@ class Geometry:
 
 	#旋转，点沿着圆心顺时针旋转
 	@staticmethod
-	def rotate(offset, center, angle):
-		x, y = offset
+	def rotate(pos, center, angle):
+		if angle == 0:
+			return pos
+		x, y = pos
 		rx, ry = center
-		rotate = Geometry.radian(angle)
+		rotate = Geometry.radian(angle) 
 		sin = math.sin(rotate)
 		cos = math.cos(rotate)
 		rotate_x = (y - ry) * sin + (x - rx) * cos + rx
@@ -128,6 +130,13 @@ class Geometry:
 		x, y = pos
 		offset_x, offset_y = offset
 		return x + offset_x, y + offset_y
+	
+	@classmethod
+	def test(self):
+		print Geometry.rotate((0, 0), (1, 0), 90)
+		print Geometry.rotate((0, 0), (1, 0), 180)
+		print Geometry.rotate((0, 0), (1, 0), 270)
+		print Geometry.rotate((0, 0), (1, 0), 360)
 
 
 #相对坐标的一些操作，绕原点旋转rotate，移动pos后得到
@@ -186,23 +195,24 @@ class Motion(object):
 		self.cycle = kwargs.get('cycle', 1)
 
 	def move(self):
-		t = Clock.through()
+		t = Clock.count()
 		for c in xrange(self.cycle):
-			slice_pos = self.source #时间片起点时的位置
-			residual_distance = self.distance #剩余长度
+			pos = self.source #时间片起点时的位置
+			residual = self.distance #剩余长度
 			while True:
 				speed = self.speed(t.next()) #每个时间片的运行速度
 				#每一帧物体所在的点，可正可负
-				frame_pos = [slice_pos]
+				frame = [pos]
 				move = self.frame_move if speed > 0 else -self.frame_move
 				for step in xrange(0, int(abs(speed)), move):
-					if not step: #第一个为slice_pos，若speed小于1，xrange结果为空
+					if not step: #第一个为pos，若speed小于1，xrange结果为空
 						continue
-					if abs(step) > residual_distance: #移动距离大于每帧步长的点，直接跳出
+					if abs(step) > residual: #移动距离大于每帧步长的点，直接跳出
 						break
-					frame_pos.append(self.step(slice_pos, step))
-				yield frame_pos
-				if abs(speed) > residual_distance:
+					frame.append(self.step(pos, step))
+				pos = self.step(pos, speed) #移动speed距离
+				frame.append(pos)
+				yield frame
+				if abs(speed) > residual:
 					break
-				slice_pos = self.step(slice_pos, speed) #移动speed距离
-				residual_distance -= speed
+				residual -= speed

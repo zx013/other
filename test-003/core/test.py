@@ -33,7 +33,8 @@ def autotest(allow=[], ignore=[]):
 			modulename = os.path.join(root, filespath)[:-3].replace(os.sep, '.')
 			try:
 				module = importlib.import_module(modulename)
-			except:
+			except Exception, ex:
+				print 'import library error:', ex
 				continue
 			for key, cls in vars(module).items():
 				if key[:2] == key[-2:] == '__': #Ä§Êõ·½·¨
