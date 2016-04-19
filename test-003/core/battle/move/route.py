@@ -132,7 +132,7 @@ class Route(Coordinate):
 
 				start = frame[0] #起点
 				end = frame[-1] #终点
-				frame = frame[:-1] #包含的帧
+				frame = frame[1:] #包含的帧
 				direct = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向
 
 				step = {'start': start, 'end': end, 'frame': frame, 'direct': direct}
@@ -140,7 +140,7 @@ class Route(Coordinate):
 
 	@classmethod
 	def sample(self):
-		return Route(compose=[Line(length=20.0, speed=500.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+		return Route(compose=[Line(length=2.0, speed=50.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
 
 	@classmethod
 	def test(self):

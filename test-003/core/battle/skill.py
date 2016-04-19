@@ -4,7 +4,7 @@ from core.battle.move.route import Route
 from core.battle.buff import Buff, BuffPool
 from core.object import Object
 from core.clock import Clock
-from core.event import bind
+from core.event import trigger
 
 
 #每个时间片计算地图中所有碰撞的物体对（计算所有包含移动Buff的物体）
@@ -14,6 +14,7 @@ class BuffMove(Buff):
 		沿着轨迹移动
 	'''
 	def __init__(self, object, **kwargs):
+		print 'abc'
 		Buff.__init__(self, **kwargs)
 
 		self.event = ('TIME_EVENT', 'TIMER')
@@ -22,12 +23,12 @@ class BuffMove(Buff):
 		self.object = object
 
 		self.map_adjust()
-		self.generator = self.object.route.move()
+		trigger(self.event, self.run, self.object.route.move())
 
+	#先旋转，再移动
+	#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
+	#在轨迹上移动时朝向会随时变化
 	def turn(self, rotate1, rotate2):
-		#先旋转，再移动
-		#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
-		#在轨迹上移动时朝向会随时变化
 		self.object.set_rotate(rotate2)
 
 	def pre_move(self):
@@ -36,9 +37,11 @@ class BuffMove(Buff):
 	def move(self, offset1, offset2):
 		self.object.set_offset(offset2)
 
-	def step(self):
+	def step(self, step):
+		print 'step', step
 		self.turn(self.object.rotate, step['direct'])
 		self.move(self.object.offset, step['end'])
+		#trigger(self.event, self.run)
 
 	def collide(self):
 		return []
@@ -46,13 +49,13 @@ class BuffMove(Buff):
 	#计算下一个点
 	#移动到下一个点
 	#计算碰撞
-	def run(self):
+	def run(self, step):
 		collide = self.collide()
-		for obj in collide:
-			obj.buffpool += self.obj.collide_change
-			self.obj.buffpool += obj.collide_change
-		if self.obj.across or not collide:
-			self.step()
+		for object in collide:
+			object.buffpool += self.object.collide_change
+			self.object.buffpool += object.collide_change
+		if self.object.across or not collide:
+			self.step(step)
 
 	#将坐标调整到地图坐标
 	def map_adjust(self):
@@ -60,6 +63,7 @@ class BuffMove(Buff):
 		self.object.shape.set_rotate(self.object.parent.rotate)
 		self.object.route.set_offset(self.object.parent.offset)
 		self.object.route.set_rotate(self.object.parent.rotate)
+
 
 
 class Skill(Object):
@@ -112,4 +116,3 @@ class Skill(Object):
 	def test(self):
 		skill = self.sample()
 		skill.release()
-		#event.bind(('TIME_EVENT', 'TIMER'), skill.step)

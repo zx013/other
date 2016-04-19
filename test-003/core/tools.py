@@ -1,4 +1,5 @@
 #-*- coding:utf-8 -*-
+import itertools
 
 #封装的函数为递归式与非递归式，递归式由上一次状态计算得出，非递归式则直接算出
 #类成员在使用时会随时间片实时改变，其中改变分为内部或外部改变
@@ -29,3 +30,18 @@ class Iterate(object):
 		print a1(), a1(), a1()
 		a2 = Iterate(lambda x: x + 1, recurse=2)
 		print a2(), a2(), a2()
+
+
+class Tools:
+	#从0开始计数
+	@staticmethod
+	def count():
+		return itertools.count(0)
+	
+	#循环，0或小于0时无限循环
+	@staticmethod
+	def repeat(cycle):
+		if cycle <= 0:
+			return itertools.repeat(0)
+		else:
+			return itertools.repeat(0, cycle)

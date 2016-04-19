@@ -1,6 +1,5 @@
 #-*- coding:utf-8 -*-
 import time
-import itertools
 import thread
 from core.event import signal
 
@@ -39,10 +38,6 @@ class Clock(object):
 	@staticmethod
 	def sleep(tm):
 		time.sleep(tm / 1000.0)
-
-	@staticmethod
-	def count():
-		return itertools.count(0)
 
 	#普通时间转换为时间片
 	@staticmethod
