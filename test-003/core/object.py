@@ -39,10 +39,11 @@ class BuffMove(Buff):
 	def move(self, offset1, offset2):
 		#print offset1, offset2
 		self.object.set_offset(offset2)
+	
+	def back(self, offset1, offset2):
+		self.object.set_offset(offset1)
 
 	def collide(self, frame):
-		for f in frame:
-			pass
 		return []
 
 	#一个时间片的移动（旋转）
@@ -52,12 +53,14 @@ class BuffMove(Buff):
 			if step['type'] == 'rotate':
 				self.turn(step['start'], step['end'])
 			elif step['type'] == 'move':
+				self.move(step['start'], step['end'])
 				collide = self.collide(step['frame'])
 				for obj in collide:
 					obj.buffpool += self.object.collide_change
 					self.object.buffpool += obj.collide_change
-				if self.object.across or not collide:
-					self.move(step['start'], step['end'])
+				if not self.object.across and collide:
+					self.del_route()
+					self.back(step['start'], step['end'])
 			yield
 
 	@classmethod
@@ -99,6 +102,10 @@ class Object(Coordinate):
 
 	def select(self, operate):
 		pass
+	
+	#获取附近的物体
+	def get_beside(self):
+		return [self]
 
 	@classmethod
 	def sample(self):

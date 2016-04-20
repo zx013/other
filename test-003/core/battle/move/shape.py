@@ -70,6 +70,18 @@ class Shape(Coordinate):
 
 		#形状组成，由扇形和矩形组成
 		self.compose = kwargs.get('compose', [])
+		
+		#快速计算范围，不精确
+		sx = sy = 0.0
+		for shape in self.compose:
+			x, y = shape.wrap_center
+			sx += x
+			sy += y
+		sx /= len(self.compose)
+		sy /= len(self.compose)
+			
+		self.wrap_center = (sx, sy)
+		self.wrap_radius = sum(map(lambda x: x.wrap_radius, self.compose))
 
 	#快速碰撞
 	def wrap_collide(self, shape):
@@ -100,6 +112,7 @@ class Shape(Coordinate):
 	def test(self):
 		shape1 = Shape.sample()
 		shape2 = Shape(compose=[Rect(width=2.0, height=4.0, offset=(0.0, 5.0)), Sector(radius=2.0, angle=90.0, offset=(0.0, 5.0))])
+		print shape1.wrap_center, shape1.wrap_radius
 		print shape1.wrap_collide(shape2)
 		shape2.compose[0].set_offset((0.0, 4.0))
 		shape2.compose[1].set_offset((0.0, 4.0))
