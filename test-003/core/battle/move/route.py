@@ -132,19 +132,17 @@ class Route(Coordinate):
 		#剩余角度
 		self.residual = 0.0
 
-	def turn(self, start, end):
-		rotate = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向，可能跳过
-
-		rotate_angle = rotate - self.toward
-		if rotate_angle > 180:
-			rotate_angle -= 360
-		if not rotate_angle:
+	#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
+	#在轨迹上移动时朝向会随时变化
+	def turn(self, rotate):
+		angle = Geometry.standard(rotate - self.toward)
+		if not angle:
 			return
-		direct = self.velocity if rotate_angle > 0 else -self.velocity #顺时针或逆时针
-		self.residual += abs(rotate_angle)
+		direct = self.velocity if angle > 0 else -self.velocity #顺时针或逆时针的步长
+		self.residual += abs(angle) #需要旋转的总长度
 
 		start = self.toward
-		while self.residual >= self.velocity:
+		while self.residual >= self.velocity: #还能再旋转一个时间片
 			end = start + direct
 			if (end - rotate) * direct > 0:
 				end = rotate
@@ -163,7 +161,9 @@ class Route(Coordinate):
 				end = frame[-1] #终点
 				frame = frame[1:] #包含的帧
 
-				for rotate_frame in self.turn(start, end):
+				rotate = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向，可能跳过
+
+				for rotate_frame in self.turn(rotate):
 					yield rotate_frame
 
 				yield {'type': 'move', 'start': start, 'end': end, 'frame': frame}

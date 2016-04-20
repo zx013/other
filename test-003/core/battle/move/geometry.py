@@ -14,6 +14,11 @@ class Geometry(object):
 	@staticmethod
 	def angle(radian):
 		return radian * 180 / math.pi
+	
+	#角度转换到-180~180内
+	@staticmethod
+	def standard(angle):
+		return (angle + 180) % 360 - 180
 
 	@staticmethod
 	def sin(angle):

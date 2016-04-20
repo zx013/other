@@ -4,7 +4,7 @@ from core.battle.move.shape import Shape
 from core.battle.move.route import Route
 from core.battle.buff import Buff, BuffPool
 from core.clock import Clock
-from core.event import trigger
+from core.event import trigger, untrigger
 
 
 #每个时间片计算地图中所有碰撞的物体对（计算所有包含移动Buff的物体）
@@ -26,35 +26,39 @@ class BuffMove(Buff):
 		self.del_route()
 		self.object.route = route
 		#self.adjust_to_map()
-		trigger(self.event, self.run, self.object.route.move())
+		trigger(self.event, self.run)
 
 	#移除路径
 	def del_route(self):
-		trigger(self.event, self.run)
+		untrigger(self.event, self.run)
 
-	#先旋转，再移动
-	#旋转的时间不到一个时间片则累计，直到有一个时间片长度时进行计时
-	#在轨迹上移动时朝向会随时变化
 	def turn(self, rotate1, rotate2):
+		#print rotate1, rotate2
 		self.object.set_rotate(rotate2)
 
 	def move(self, offset1, offset2):
+		#print offset1, offset2
 		self.object.set_offset(offset2)
 
 	def collide(self, frame):
+		for f in frame:
+			pass
 		return []
 
-	#计算下一个点
-	#移动到下一个点
-	#计算碰撞
-	def run(self, step):
-		collide = self.collide(step['frame'])
-		for object in collide:
-			object.buffpool += self.object.collide_change
-			self.object.buffpool += object.collide_change
-		if self.object.across or not collide:
-			self.turn(self.object.rotate, step['rotate'])
-			self.move(self.object.offset, step['end'])
+	#一个时间片的移动（旋转）
+	def run(self):
+		for step in self.object.route.move():
+			print step
+			if step['type'] == 'rotate':
+				self.turn(step['start'], step['end'])
+			elif step['type'] == 'move':
+				collide = self.collide(step['frame'])
+				for obj in collide:
+					obj.buffpool += self.object.collide_change
+					self.object.buffpool += obj.collide_change
+				if self.object.across or not collide:
+					self.move(step['start'], step['end'])
+			yield
 
 	@classmethod
 	def sample(self):

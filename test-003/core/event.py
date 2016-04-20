@@ -18,20 +18,21 @@ class Event(object):
 		if func in self.event[e]:
 			self.event[e].remove(func)
 
-	#将生成器绑定到事件，每次事件触发时调用一次生成器作为函数参数，直到结束
-	def trigger(self, e, func, generator=None):
+	#将生成器绑定到事件，每次事件触发时调用一次生成器，直到结束
+	def trigger(self, e, func):
+		generator = func()
 		def _trigger(*args, **kwargs):
 			try:
-				func(generator.next())
+				generator.next()
 			except:
 				self.unbind(e, _trigger)
-		if generator:
-			self.bind(e, _trigger)
-			self.trig[func] = _trigger
-		else:
-			if self.trig.get(func):
-				self.unbind(e, self.trig[func])
-				del self.trig[func]
+		self.bind(e, _trigger)
+		self.trig[func] = _trigger
+	
+	def untrigger(self, e, func):
+		if self.trig.get(func):
+			self.unbind(e, self.trig[func])
+			del self.trig[func]
 	
 	@classmethod
 	def test(self):
@@ -43,9 +44,9 @@ class Event(object):
 		unbind(('EVENT', 'fun'), fun)
 		signal(('EVENT', 'fun'), a=1, b=2)
 
-		trigger(('EVENT', 'fun'), fun, (i for i in xrange(2)))
+		trigger(('EVENT', 'fun'), lambda : (i for i in xrange(2)))
 		signal(('EVENT', 'fun'))
-		trigger(('EVENT', 'fun'), fun)
+		untrigger(('EVENT', 'fun'), fun)
 		signal(('EVENT', 'fun'))
 		signal(('EVENT', 'fun'))
 			
@@ -56,3 +57,4 @@ signal = event.signal
 bind = event.bind
 unbind = event.unbind
 trigger = event.trigger
+untrigger = event.untrigger
