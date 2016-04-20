@@ -53,7 +53,7 @@ class BuffMove(Buff):
 			object.buffpool += self.object.collide_change
 			self.object.buffpool += object.collide_change
 		if self.object.across or not collide:
-			self.turn(self.object.rotate, step['direct'])
+			self.turn(self.object.rotate, step['rotate'])
 			self.move(self.object.offset, step['end'])
 
 	@classmethod

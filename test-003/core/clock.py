@@ -14,14 +14,27 @@ class Clock(object):
 	#定时器运行次数
 	number = 0
 	
+	event = {}
+	
 	@staticmethod
 	def timer():
 		def _timer():
 			while 1:
 				signal(('TIME_EVENT', 'TIMER'))
+				if Clock.event.get(Clock.number):
+					for event in Clock.event[Clock.number]:
+						signal(event)
+					del Clock.event[Clock.number]
 				Clock.number += 1
 				Clock.sleep(Clock.interval)
 		thread.start_new_thread(_timer, ())
+
+	#在num个时间片后触发事件
+	@staticmethod
+	def add(event, number):
+		number += Clock.number
+		Clock.event.setdefault(number, [])
+		Clock.event[number].append(event)
 
 	#延时执行
 	@staticmethod

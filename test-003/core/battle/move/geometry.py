@@ -163,7 +163,7 @@ class Coordinate(object):
 	#位置，相对坐标
 	def set_offset(self, offset):
 		self.offset = offset
-		self.offset_x, self.offset_y = self.offset
+		#self.offset_x, self.offset_y = self.offset
 
 	#扩张
 	def set_expand(self, expand):
@@ -192,9 +192,6 @@ class Motion(object):
 		#速度，每个时间片运行的距离
 		speed = kwargs.get('speed', 0.0)
 		self.speed = Iterate(speed, input=Clock.convert_frequency, output=Clock.convert_frequency)
-		
-		#角速度，每个时间片旋转的角度
-		self.velocity = kwargs.get('velocity', 0.0)
 
 		#time，运行的总时间片数，匀速运动
 		self.time = kwargs.get('time', 0)

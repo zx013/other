@@ -120,27 +120,57 @@ class Route(Coordinate):
 	def __init__(self, **kwargs):
 		Coordinate.__init__(self, **kwargs)
 
+		#起始朝向
+		self.toward = kwargs.get('toward', self.rotate)
+
 		#轨迹包含的线段
 		self.compose = kwargs['compose']
+
+		#角速度，每个时间片旋转的角度
+		self.velocity = kwargs.get('velocity', 20.0)
+
+		#剩余角度
+		self.residual = 0.0
+
+	def turn(self, start, end):
+		rotate = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向，可能跳过
+
+		rotate_angle = rotate - self.toward
+		if rotate_angle > 180:
+			rotate_angle -= 360
+		if not rotate_angle:
+			return
+		direct = self.velocity if rotate_angle > 0 else -self.velocity #顺时针或逆时针
+		self.residual += abs(rotate_angle)
+
+		start = self.toward
+		while self.residual >= self.velocity:
+			end = start + direct
+			if (end - rotate) * direct > 0:
+				end = rotate
+			yield {'type': 'rotate', 'start': start, 'end': end}
+			self.residual -= self.velocity
+			start = end
+		self.toward = rotate
 
 	#获取下一个路径点及所在的轨迹
 	def move(self):
 		for route in self.compose:
-			generator = route.move()
-			for frame in generator:
+			for frame in route.move():
 				frame = [self.adjust(route.adjust(pos)) for pos in frame] #根据地图偏移进行调整
 
 				start = frame[0] #起点
 				end = frame[-1] #终点
 				frame = frame[1:] #包含的帧
-				direct = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向
 
-				step = {'start': start, 'end': end, 'frame': frame, 'direct': direct}
-				yield step
+				for rotate_frame in self.turn(start, end):
+					yield rotate_frame
+
+				yield {'type': 'move', 'start': start, 'end': end, 'frame': frame}
 
 	@classmethod
 	def sample(self):
-		return Route(compose=[Line(length=2.0, speed=50.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)])
+		return Route(compose=[Line(length=2.0, speed=50.0, cycle=2, rotate=90.0), Arc(offset=(0.0, 20.0), length=20.0, middle=-10.0, speed=1500.0)], toward=30.0)
 
 	@classmethod
 	def test(self):
