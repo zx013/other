@@ -6,12 +6,23 @@ from core.battle.buff import Buff, BuffPool
 from core.clock import Clock
 
 
+class BuffAttack(Buff):
+	def __init__(self, **kwargs):
+		Buff.__init__(self, **kwargs)
+
+		self.event = (('TIME_EVENT', 'TIMER'))
+
+		self.object = kwargs['object']
+	
+	def run(self):
+		pass
+		#self.object.life
+
+
+
 #每个时间片计算地图中所有碰撞的物体对（计算所有包含移动Buff的物体）
 #每个物体移动时的碰撞直接获取结果（物体碰撞到的其它物体）
 class BuffMove(Buff):
-	'''
-		沿着轨迹移动
-	'''
 	#改变rotate, offset
 	def __init__(self, **kwargs):
 		Buff.__init__(self, **kwargs)

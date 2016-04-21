@@ -7,6 +7,10 @@ from core.event import trigger, untrigger
 class Buff(object):
 	def __init__(self, **kwargs):
 		pass
+	
+	#获取当前object，施加buff的object，关联object列表
+	def info(self):
+		pass
 
 	def create(self):
 		trigger(self.event, self.run)
