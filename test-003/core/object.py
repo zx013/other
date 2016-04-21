@@ -4,7 +4,6 @@ from core.battle.move.shape import Shape
 from core.battle.move.route import Route
 from core.battle.buff import Buff, BuffPool
 from core.clock import Clock
-from core.event import trigger, untrigger
 
 
 #每个时间片计算地图中所有碰撞的物体对（计算所有包含移动Buff的物体）
@@ -13,24 +12,16 @@ class BuffMove(Buff):
 	'''
 		沿着轨迹移动
 	'''
-	def __init__(self, object, **kwargs):
+	#改变rotate, offset
+	def __init__(self, **kwargs):
 		Buff.__init__(self, **kwargs)
 
-		self.event = ('TIME_EVENT', 'TIMER')
+		self.event = ('MAP_EVENT', 'COLLIDE')
 
 		#buff所在的object或skill
-		self.object = object
+		self.object = kwargs['object']
 
-	#添加路径
-	def add_route(self, route):
-		self.del_route()
-		self.object.route = route
-		#self.adjust_to_map()
-		trigger(self.event, self.run)
-
-	#移除路径
-	def del_route(self):
-		untrigger(self.event, self.run)
+		self.route = kwargs['route']
 
 	def turn(self, rotate1, rotate2):
 		#print rotate1, rotate2
@@ -39,16 +30,18 @@ class BuffMove(Buff):
 	def move(self, offset1, offset2):
 		#print offset1, offset2
 		self.object.set_offset(offset2)
-	
+
 	def back(self, offset1, offset2):
 		self.object.set_offset(offset1)
 
 	def collide(self, frame):
 		return []
 
+	#{'start': (1.5, 9.184850993605148e-17), 'frame': [(2.0, 1.2246467991473532e-16)], 'end': (2.0, 1.2246467991473532e-16), 'type': 'move'}
+	#{'start': 90.0, 'end': 70.0, 'type': 'rotate'}
 	#一个时间片的移动（旋转）
 	def run(self):
-		for step in self.object.route.move():
+		for step in self.route.move():
 			print step
 			if step['type'] == 'rotate':
 				self.turn(step['start'], step['end'])
@@ -59,19 +52,19 @@ class BuffMove(Buff):
 					obj.buffpool += self.object.collide_change
 					self.object.buffpool += obj.collide_change
 				if not self.object.across and collide:
-					self.del_route()
+					raise
 					self.back(step['start'], step['end'])
 			yield
 
 	@classmethod
 	def sample(self):
-		return BuffMove(Object.sample())
+		return BuffMove(object=Object.sample(), route=Route.sample())
 
 	@classmethod
 	def test(self):
 		buffmove = BuffMove.sample()
-		buffmove.add_route(Route.sample())
-		#buffmove.delete()
+		buffmove.create()
+		#buffmove.destroy()
 
 
 class Object(Coordinate):
@@ -95,14 +88,14 @@ class Object(Coordinate):
 
 		self.buffpool = BuffPool()
 
-		self.buffpool.insert(BuffMove(self))
+		self.buffpool.insert(BuffMove(object=self, route=None))
 
 	def add(self, shape):
 		self.shape = kwargs['shape']
 
 	def select(self, operate):
 		pass
-	
+
 	#获取附近的物体
 	def get_beside(self):
 		return [self]

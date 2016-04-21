@@ -12,7 +12,8 @@ class Event(object):
 	
 	def bind(self, e, func):
 		self.event.setdefault(e, [])
-		self.event[e].append(func)
+		if func not in self.event[e]: #同一个函数只能触发一次事件
+			self.event[e].append(func)
 
 	def unbind(self, e, func):
 		if func in self.event[e]:
