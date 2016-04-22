@@ -45,3 +45,13 @@ class Tools:
 			return itertools.repeat(0)
 		else:
 			return itertools.repeat(0, cycle)
+	
+	#(0, 1, 2, 3, 4)
+	#(None, 0), (0, 1), (1, 2), (2, 3), (3, 4), (4, None)
+	@staticmethod
+	def future(generator):
+		v1 = None
+		for v2 in generator:
+			yield v1, v2
+			v1 = v2
+		yield v1, None

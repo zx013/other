@@ -11,6 +11,12 @@ class Buff(object):
 
 		self.target_object = kwargs.get('target_object')
 
+	#检查变量是否在object中
+	def check(self, var):
+		for v in var:
+			hasattr(self.source_object, v)
+			hasattr(self.target_object, v)
+
 	#获取当前object，施加buff的object，关联object列表（skill覆盖的范围），中间值value（根据关联object计算出的值）
 	#source_object, target_object
 	def info(self):

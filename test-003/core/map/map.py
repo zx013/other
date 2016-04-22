@@ -7,13 +7,16 @@ class Map(object):
 		self.objectpool = []
 		bind(('TIME_EVENT', 'TIMER'), self.collide)
 	
+	#Åö×²£¬²¢½»»»×´Ì¬
 	def collide(self):
-		collidepool = {}
+		collidepool = set()
 		for obj1 in self.objectpool:
-			collidepool[obj1] = set()
 			for obj2 in self.objectpool:
 				if obj1.shape.collide(obj2.shape):
-					collidepool[obj1].add(obj2)
+					obj1.buffpool += obj2.collide_change
+					obj2.buffpool += obj1.collide_change
+					collidepool.add(obj1)
+					collidepool.add(obj2)
 		signal(('MAP_EVENT', 'COLLIDE'))
 
 	@classmethod
