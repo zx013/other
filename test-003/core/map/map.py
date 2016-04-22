@@ -22,4 +22,4 @@ class Map(object):
 
 	@classmethod
 	def test(self):
-		m = self.sample()
+		m = Map.sample()

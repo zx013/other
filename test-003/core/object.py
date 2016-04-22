@@ -10,14 +10,32 @@ class BuffAttack(Buff):
 	def __init__(self, **kwargs):
 		Buff.__init__(self, **kwargs)
 
-		self.event = (('TIME_EVENT', 'TIMER'))
+		self.event = ('TIME_EVENT', 'TIMER')
+		
+		#life, attack, defense
+		#life
 
-		self.object = kwargs['object']
-	
+	def attack(self, damage):
+		life = self.target_object.life
+		if damage > life:
+			damage = life
+		self.target_object.life = life - damage
+
 	def run(self):
-		pass
-		#self.object.life
+		damage = self.source_object.attack - self.target_object.defense
+		self.attack(damage)
+		print self.source_object.life, self.target_object.life
+		yield
 
+
+	@classmethod
+	def sample(self):
+		return BuffAttack(source_object=Object.sample(), target_object=Object.sample())
+
+	@classmethod
+	def test(self):
+		buffattack = BuffAttack.sample()
+		buffattack.create()
 
 
 #每个时间片计算地图中所有碰撞的物体对（计算所有包含移动Buff的物体）
@@ -29,21 +47,18 @@ class BuffMove(Buff):
 
 		self.event = ('MAP_EVENT', 'COLLIDE')
 
-		#buff所在的object或skill
-		self.object = kwargs['object']
-
 		self.route = kwargs['route']
 
 	def turn(self, rotate1, rotate2):
 		#print rotate1, rotate2
-		self.object.set_rotate(rotate2)
+		self.source_object.set_rotate(rotate2)
 
 	def move(self, offset1, offset2):
 		#print offset1, offset2
-		self.object.set_offset(offset2)
+		self.source_object.set_offset(offset2)
 
 	def back(self, offset1, offset2):
-		self.object.set_offset(offset1)
+		self.source_object.set_offset(offset1)
 
 	def collide(self, frame):
 		return []
@@ -60,21 +75,21 @@ class BuffMove(Buff):
 				self.move(step['start'], step['end'])
 				collide = self.collide(step['frame'])
 				for obj in collide:
-					obj.buffpool += self.object.collide_change
-					self.object.buffpool += obj.collide_change
-				if not self.object.across and collide:
+					obj.buffpool += self.source_object.collide_change
+					self.source_object.buffpool += obj.collide_change
+				if not self.source_object.across and collide:
 					raise
 					self.back(step['start'], step['end'])
 			yield
 
 	@classmethod
 	def sample(self):
-		return BuffMove(object=Object.sample(), route=Route.sample())
+		return BuffMove(source_object=Object.sample(), route=Route.sample())
 
 	@classmethod
 	def test(self):
 		buffmove = BuffMove.sample()
-		buffmove.create()
+		#buffmove.create()
 		#buffmove.destroy()
 
 
@@ -99,7 +114,12 @@ class Object(Coordinate):
 
 		self.buffpool = BuffPool()
 
-		self.buffpool.insert(BuffMove(object=self, route=None))
+		self.buffpool.insert(BuffMove(source_object=self, route=None))
+
+
+		self.life = 5.0
+		self.attack = 2.0
+		self.defense = 1.0
 
 	def add(self, shape):
 		self.shape = kwargs['shape']

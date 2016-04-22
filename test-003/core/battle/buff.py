@@ -6,9 +6,13 @@ from core.event import trigger, untrigger
 #run，buff生效的动作，为生成器，每一次触发执行一段，自然结束或用raise退出
 class Buff(object):
 	def __init__(self, **kwargs):
-		pass
-	
-	#获取当前object，施加buff的object，关联object列表
+		#buff所在的object或skill
+		self.source_object = kwargs['source_object']
+
+		self.target_object = kwargs.get('target_object')
+
+	#获取当前object，施加buff的object，关联object列表（skill覆盖的范围），中间值value（根据关联object计算出的值）
+	#source_object, target_object
 	def info(self):
 		pass
 

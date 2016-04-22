@@ -39,5 +39,5 @@ class Skill(Object):
 
 	@classmethod
 	def test(self):
-		skill = self.sample()
+		skill = Skill.sample()
 		skill.release()
