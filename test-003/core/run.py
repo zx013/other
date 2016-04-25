@@ -22,16 +22,17 @@ from core.tools import Tools
 #skill.collide_change添加到object.buffpool
 #buff生效并运行
 
-#API流程
-#创建object
-#创建skill
-#定义buff
-#创建movebuff
 
+#API流程
 
 #class Objectxxx: pass #定义一个object，包含skill
+#位置offset，方向rorate，形状shape
+
 #class Skillxxx: pass #定义一个skill，包含buff
+#位置offset，方向rorate，形状shape，轨迹route
+
 #class Buffxxx: pass #定义一个buff
+#源object，目标object，变量value
 #
 #
 
@@ -109,3 +110,21 @@ class BuffMove(Buff):
 		buffmove = BuffMove.sample()
 		buffmove = buffmove.action(Object.sample(), Object.sample())
 		#buffmove.create()
+
+
+
+from core.battle.skill import Skill
+
+class SkillMove(Skill):
+	def __init__(self, **kwargs):
+		Skill.__init__(self, **kwargs)
+
+
+
+from core.object import Object
+
+class ObjectOperate(Object):
+	def __init__(self, **kwargs):
+		Object.__init__(self, **kwargs)
+		
+		self.skillpool = []
