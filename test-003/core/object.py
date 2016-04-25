@@ -29,7 +29,7 @@ class BuffAttack(Buff):
 	@classmethod
 	def test(self):
 		buffattack = BuffAttack.sample()
-		buffattack.create()
+		#buffattack.create()
 
 
 #每个时间片计算地图中所有碰撞的物体对（计算所有包含移动Buff的物体）
@@ -72,13 +72,13 @@ class BuffMove(Buff):
 
 	@classmethod
 	def sample(self):
-		return BuffMove(source_object=Object.sample(), route=Route.sample())
+		return BuffMove(route=Route.sample())
 
 	@classmethod
 	def test(self):
 		buffmove = BuffMove.sample()
-		buffmove.create()
-		#buffmove.destroy()
+		buffmove = buffmove.action(Object.sample(), Object.sample())
+		#buffmove.create()
 
 
 class Object(Coordinate):
@@ -112,6 +112,17 @@ class Object(Coordinate):
 	def add(self, shape):
 		self.shape = kwargs['shape']
 
+
+	def collide(self, obj):
+		if self.shape.collide(obj.shape):
+			self._collide(obj)
+			obj._collide(self)
+			return True
+		return False
+	
+	def _collide(self, obj):
+		self.buffpool.add(obj.collide_change, source_object=self, target_object=obj)
+
 	def select(self, operate):
 		pass
 
@@ -122,3 +133,7 @@ class Object(Coordinate):
 	@classmethod
 	def sample(self):
 		return Object()
+	
+	@classmethod
+	def test(self):
+		pass
