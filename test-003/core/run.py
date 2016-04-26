@@ -1,7 +1,14 @@
 #-*- coding:utf-8 -*-
-from core.battle.move.route import Route
 from core.battle.buff import Buff
 from core.tools import Tools, Pool
+
+
+#buff
+#改变object的状态
+#skill
+#将buff添加到object
+#object
+#操作的物体本身
 
 
 #操作详细流程
@@ -33,8 +40,13 @@ from core.tools import Tools, Pool
 
 #class Buffxxx: pass #定义一个buff
 #源object，目标object，变量value
-#
-#
+
+
+#初始化时生成模版
+#之后根据action函数实例化，添入其它空缺参数
+#比如类A有a, b, c三个参数
+#a = A(a=1)，初始化模板，固定参数a
+#a.action(b=2, c=3)，实例化时，只需传入初始化未传入的参数
 
 class BuffAttack(Buff):
 	def __init__(self, **kwargs):
@@ -102,6 +114,7 @@ class BuffMove(Buff):
 
 	@classmethod
 	def sample(self):
+		from core.battle.move.route import Route
 		return BuffMove(route=Route.sample())
 
 	@classmethod
@@ -131,9 +144,38 @@ from core.object import Object
 class ObjectOperate(Object):
 	def __init__(self, **kwargs):
 		Object.__init__(self, **kwargs)
-		
+
 		self.skillpool = Pool()
-	
+
 	@classmethod
 	def sample(self):
 		return ObjectOperate()
+
+	@classmethod
+	def test(self):
+		from core.battle.move.shape import Shape
+		
+		object1 = Object.sample()
+		object2 = Object.sample()
+
+		object1.shape = Shape.sample()
+
+		skill1 = Skill.sample()
+		object1.add(skill1)
+
+		skill2 = Skill.sample()
+		object2.add(skill2)
+		
+		skill2.shape = Shape.sample()
+
+		buff1 = Buff.sample()
+		object1.collide_buffpool.insert(buff1)
+		
+		buff2 = Buff.sample()
+		skill2.collide_buffpool.insert(buff2)
+		
+		object1.collide(skill2)
+		
+		
+		buff3 = object1.buffpool.pool.pop()
+		print type(buff3.source_object), type(buff3.target_object)

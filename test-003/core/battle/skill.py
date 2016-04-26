@@ -3,9 +3,18 @@ from core.object import Object
 from core.tools import Pool
 
 
+#传递的buff，移动路径
 class Skill(Object):
 	def __init__(self, **kwargs):
 		Object.__init__(self, **kwargs)
+
+
+	#创建一条移动路径
+	#根据路径生成buffmove
+	#将buffmove添加到buffpool
+
+	#生成碰撞传递的buff
+	#将buff添加到collide_buffpool
 
 
 	#默认传入的参数，source_object

@@ -1,8 +1,5 @@
 #-*- coding:utf-8 -*-
 from core.battle.move.geometry import Coordinate
-from core.battle.move.shape import Shape
-from core.battle.buff import Buff
-from core.clock import Clock
 from core.tools import Pool
 
 
@@ -33,6 +30,9 @@ class Object(Coordinate):
 		self.attack = 2.0
 		self.defense = 1.0
 
+	def add(self, child):
+		child.parent = self
+		self.children.append(child)
 
 	def collide(self, obj):
 		if self.shape.collide(obj.shape):
@@ -42,14 +42,13 @@ class Object(Coordinate):
 		return False
 
 	def _collide(self, obj):
-		self.buffpool.add(obj.collide_buffpool, source_object=self, target_object=obj)
+		#不为Object的是Skill，取其parent
+		source_object = self if type(self) is Object else self.parent
+		target_object = obj if type(obj) is Object else obj.parent
+		self.buffpool.add(obj.collide_buffpool, source_object=source_object, target_object=target_object)
 
 	def select(self, operate):
 		pass
-
-	#获取附近的物体
-	def get_beside(self):
-		return [self]
 
 	@classmethod
 	def sample(self):
@@ -57,6 +56,9 @@ class Object(Coordinate):
 
 	@classmethod
 	def test(self):
+		from core.battle.move.shape import Shape
+		from core.battle.buff import Buff
+		
 		obj1 = Object.sample()
 		obj1.shape = Shape.sample()
 		obj1.collide_buffpool.insert(Buff.sample())
@@ -65,5 +67,6 @@ class Object(Coordinate):
 		obj2.shape = Shape.sample()
 		obj2.collide_buffpool.insert(Buff.sample())
 
+		print obj1.buffpool.pool, obj2.buffpool.pool
 		obj1.collide(obj2)
-		print obj1.buffpool.pool
+		print obj1.buffpool.pool, obj2.buffpool.pool

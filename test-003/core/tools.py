@@ -60,6 +60,10 @@ class Tools(object):
 from copy import copy
 
 class Unit(object):
+	def __init__(self, **kwargs):
+		for key, value in kwargs.items():
+			setattr(self, key, value)
+
 	def check(self, var):
 		for v in var:
 			hasattr(self.source_object, v)
@@ -116,4 +120,4 @@ class Pool(object):
 		unitpool2.insert(unit3)
 		unit4 = Unit.sample()
 		unitpool2.insert(unit4)
-		print unitpool1.pool, unitpool2.pool
+		print len(unitpool1.pool), len(unitpool2.pool)
