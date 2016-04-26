@@ -1,5 +1,6 @@
 #-*- coding:utf-8 -*-
 from core.object import Object
+from core.tools import Pool
 
 
 class Skill(Object):

@@ -23,7 +23,7 @@ class Iterate(object):
 			return self.recurse
 		else:
 			return self.func(*args, **kwargs)
-	
+
 	@classmethod
 	def test(self):
 		a1 = Iterate(1, recurse=2)
@@ -32,12 +32,12 @@ class Iterate(object):
 		print a2(), a2(), a2()
 
 
-class Tools:
+class Tools(object):
 	#从0开始计数
 	@staticmethod
 	def count():
 		return itertools.count(0)
-	
+
 	#循环，0或小于0时无限循环
 	@staticmethod
 	def repeat(cycle):
@@ -45,7 +45,7 @@ class Tools:
 			return itertools.repeat(0)
 		else:
 			return itertools.repeat(0, cycle)
-	
+
 	#(0, 1, 2, 3, 4)
 	#(None, 0), (0, 1), (1, 2), (2, 3), (3, 4), (4, None)
 	@staticmethod
@@ -55,3 +55,65 @@ class Tools:
 			yield v1, v2
 			v1 = v2
 		yield v1, None
+
+
+from copy import copy
+
+class Unit(object):
+	def check(self, var):
+		for v in var:
+			hasattr(self.source_object, v)
+			hasattr(self.target_object, v)
+
+	#创建一个实例
+	def action(self, **kwargs):
+		unit = copy(self)
+		for key, value in kwargs.items():
+			setattr(unit, key, value)
+		return unit
+
+	@classmethod
+	def sample(self):
+		return Unit()
+
+
+class Pool(object):
+	def __init__(self, **kwargs):
+		self.pool = set()
+
+	#带有额外参数则实例化
+	def insert(self, unit, **kwargs):
+		if not kwargs:
+			self.pool.add(unit)
+		else:
+			self.pool.add(unit.action(**kwargs))
+
+	def delete(self, unit):
+		if unit in self.pool:
+			self.pool.remove(unit)
+
+	def add(self, pool, **kwargs):
+		for unit in pool.pool:
+			self.insert(unit, **kwargs)
+
+	def loop(self, cmp=None, key=None, reverse=False):
+		return sorted(self.pool, cmp, key, reverse)
+
+	@classmethod
+	def sample(self):
+		return Pool()
+
+	@classmethod
+	def test(self):
+		unitpool1 = Pool.sample()
+		unitpool2 = Pool.sample()
+
+		unit1 = Unit.sample()
+		unitpool1.insert(unit1)
+		unit2 = Unit.sample()
+		unitpool1.insert(unit2)
+		unit3 = Unit.sample()
+		unitpool2.insert(unit3)
+		unit4 = Unit.sample()
+		unitpool2.insert(unit4)
+		print unitpool1.pool, unitpool2.pool

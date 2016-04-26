@@ -1,8 +1,9 @@
 #-*- coding:utf-8 -*-
 from core.battle.move.geometry import Coordinate
 from core.battle.move.shape import Shape
-from core.battle.buff import Buff, BuffPool
+from core.battle.buff import Buff
 from core.clock import Clock
+from core.tools import Pool
 
 
 class Object(Coordinate):
@@ -22,9 +23,9 @@ class Object(Coordinate):
 		self.across = kwargs.get('across', False)
 
 		#碰撞后给碰撞的物体施加的buff
-		self.collide_change = BuffPool()
+		self.collide_buffpool = Pool()
 
-		self.buffpool = BuffPool()
+		self.buffpool = Pool()
 
 		#self.buffpool.insert(BuffMove(source_object=self, route=None))
 
@@ -41,7 +42,7 @@ class Object(Coordinate):
 		return False
 
 	def _collide(self, obj):
-		self.buffpool.add(obj.collide_change, source_object=self, target_object=obj)
+		self.buffpool.add(obj.collide_buffpool, source_object=self, target_object=obj)
 
 	def select(self, operate):
 		pass
@@ -58,11 +59,11 @@ class Object(Coordinate):
 	def test(self):
 		obj1 = Object.sample()
 		obj1.shape = Shape.sample()
-		obj1.collide_change.insert(Buff.sample())
+		obj1.collide_buffpool.insert(Buff.sample())
 
 		obj2 = Object.sample()
 		obj2.shape = Shape.sample()
-		obj2.collide_change.insert(Buff.sample())
+		obj2.collide_buffpool.insert(Buff.sample())
 
 		obj1.collide(obj2)
-		print obj1.buffpool.buffpool
+		print obj1.buffpool.pool

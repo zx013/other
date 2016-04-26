@@ -1,7 +1,7 @@
 #-*- coding:utf-8 -*-
 from core.battle.move.route import Route
 from core.battle.buff import Buff
-from core.tools import Tools
+from core.tools import Tools, Pool
 
 
 #操作详细流程
@@ -13,13 +13,13 @@ from core.tools import Tools
 
 #定义buff类
 #创建buff
-#buff添加到skill.collide_change
+#buff添加到skill.collide_buffpool
 #创建movebuff
 #movebuff添加到skill.buffpool
 #运行movebuff
 
 #skill和object碰撞
-#skill.collide_change添加到object.buffpool
+#skill.collide_buffpool添加到object.buffpool
 #buff生效并运行
 
 
@@ -108,7 +108,7 @@ class BuffMove(Buff):
 	def test(self):
 		from core.object import Object
 		buffmove = BuffMove.sample()
-		buffmove = buffmove.action(Object.sample(), Object.sample())
+		buffmove = buffmove.action(source_object=Object.sample(), target_object=Object.sample())
 		#buffmove.create()
 
 
@@ -119,6 +119,11 @@ class SkillMove(Skill):
 	def __init__(self, **kwargs):
 		Skill.__init__(self, **kwargs)
 
+		self.buffpool = Pool()
+
+	@classmethod
+	def sample(self):
+		return SkillMove()
 
 
 from core.object import Object
@@ -127,4 +132,8 @@ class ObjectOperate(Object):
 	def __init__(self, **kwargs):
 		Object.__init__(self, **kwargs)
 		
-		self.skillpool = []
+		self.skillpool = Pool()
+	
+	@classmethod
+	def sample(self):
+		return ObjectOperate()
