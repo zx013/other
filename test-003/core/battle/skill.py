@@ -2,6 +2,8 @@
 from core.object import Object
 from core.tools import Pool
 
+from core.script.buff.buffmove import BuffMove
+
 
 #传递的buff，移动路径
 class Skill(Object):
@@ -9,13 +11,8 @@ class Skill(Object):
 		Object.__init__(self, **kwargs)
 
 
-	#创建一条移动路径
-	#根据路径生成buffmove
-	#将buffmove添加到buffpool
-
-	#生成碰撞传递的buff
-	#将buff添加到collide_buffpool
-
+	def move(self):
+		self.buffpool.insert(BuffMove(shape=self.shape))
 
 	#默认传入的参数，source_object
 	#选中一个目标，target_object
@@ -45,9 +42,11 @@ class Skill(Object):
 
 	@classmethod
 	def sample(self):
-		return Skill()
+		from core.battle.move.route import Route
+		return Skill(route=Route.sample())
 
 	@classmethod
 	def test(self):
 		skill = Skill.sample()
 		skill.release()
+		skill.move()

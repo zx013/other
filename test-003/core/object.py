@@ -1,11 +1,12 @@
 #-*- coding:utf-8 -*-
 from core.battle.move.geometry import Coordinate
-from core.tools import Pool
+from core.tools import Pool, Unit
 
 
-class Object(Coordinate):
+class Object(Coordinate, Unit):
 	def __init__(self, **kwargs):
 		Coordinate.__init__(self, **kwargs)
+		Unit.__init__(self, **kwargs)
 
 		self.shape = kwargs.get('shape')
 
