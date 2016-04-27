@@ -10,9 +10,11 @@ class Skill(Object):
 	def __init__(self, **kwargs):
 		Object.__init__(self, **kwargs)
 
+		self.buffmove = BuffMove()
 
-	def move(self):
-		self.buffpool.insert(BuffMove(shape=self.shape))
+	def run(self):
+		self.buffpool.insert(self.buffmove, route=self.route, source_object=self)
+		print self.buffpool.pool, tuple(self.buffpool.pool)[0].source_object
 
 	#默认传入的参数，source_object
 	#选中一个目标，target_object
@@ -49,4 +51,4 @@ class Skill(Object):
 	def test(self):
 		skill = Skill.sample()
 		skill.release()
-		skill.move()
+		skill.run()

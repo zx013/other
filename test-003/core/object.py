@@ -8,8 +8,6 @@ class Object(Coordinate, Unit):
 		Coordinate.__init__(self, **kwargs)
 		Unit.__init__(self, **kwargs)
 
-		self.shape = kwargs.get('shape')
-
 		self.parent = kwargs.get('parent')
 
 		self.children = []

@@ -48,5 +48,5 @@ class BuffMove(Buff):
 	def test(self):
 		from core.object import Object
 		buffmove = BuffMove.sample()
-		buffmove = buffmove.action(source_object=Object.sample(), target_object=Object.sample())
+		#buffmove = buffmove.action(source_object=Object.sample(), target_object=Object.sample())
 		#buffmove.create()

@@ -14,7 +14,9 @@ class Buff(Unit):
 	#source_object, target_object
 
 	def action(self, **kwargs):
-		return Unit.action(self, **kwargs)
+		unit = Unit.action(self, **kwargs)
+		unit.create()
+		return unit
 
 	def create(self):
 		trigger(self.event, self.run)
@@ -22,7 +24,10 @@ class Buff(Unit):
 	def destroy(self):
 		untrigger(self.event, self.run)
 
+	def run(self):
+		yield
+
 	@classmethod
 	def sample(self):
-		return Buff()
+		return Buff(event=('test',))
 
