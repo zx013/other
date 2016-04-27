@@ -21,10 +21,6 @@ class Skill(Object):
 	#选中一个点，target_point
 	#无
 	def release(self, target=None):
-		'''
-		self.object release skill
-			target is object, point or None
-		'''
 		if isinstance(target, Object):
 			self._release_object(target)
 		elif isinstance(target, tuple) or isinstance(target, list): #may use isinstance(target, Point)
@@ -51,4 +47,4 @@ class Skill(Object):
 	def test(self):
 		skill = Skill.sample()
 		skill.release()
-		skill.run()
+		#skill.run()
