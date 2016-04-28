@@ -163,8 +163,9 @@ class Route(Coordinate):
 
 				rotate = Geometry.atan((end[0] - start[0]) / (end[1] - start[1])) #方向，可能跳过
 
-				for rotate_frame in self.turn(rotate):
-					yield rotate_frame
+				if self.velocity: #角速度为0不旋转
+					for rotate_frame in self.turn(rotate):
+						yield rotate_frame
 
 				yield {'type': 'move', 'start': start, 'end': end, 'frame': frame}
 

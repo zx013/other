@@ -16,10 +16,10 @@ class Skill(Object):
 		self.buffpool.insert(self.buffmove, route=self.route, source_object=self)
 		print self.buffpool.pool, tuple(self.buffpool.pool)[0].source_object
 
-	#默认传入的参数，source_object
-	#选中一个目标，target_object
-	#选中一个点，target_point
-	#无
+	#三种释放方式
+	#无须选择，直接使用
+	#选择目标object
+	#选择目标点
 	def release(self, target=None):
 		if isinstance(target, Object):
 			self._release_object(target)
@@ -28,12 +28,15 @@ class Skill(Object):
 		else:
 			self._release_none()
 
+	#一个时间片（关联自身和目标），追踪路径
 	def _release_object(self, target_object):
 		pass
 
+	#直线轨迹
 	def _release_point(self, target_point):
 		pass
 
+	#一个时间片（关联自身），扩张动作
 	def _release_none(self):
 		pass
 
